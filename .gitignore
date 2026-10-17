@@ -1,0 +1,14 @@
+# Local configuration (copy from .env.example)
+.env
+.env.*
+!.env.example
+
+# Personal Compose overrides (docker compose merges this file automatically)
+compose.override.yaml
+compose.override.yml
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
