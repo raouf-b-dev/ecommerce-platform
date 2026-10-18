@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-First release, planned as 0.1.0. Runs ecommerce-store-api 0.10.0, ecommerce-admin-dashboard 0.6.0 and ecommerce-store-web 0.5.0.
+Tracks the path to 0.1.0. Pins ecommerce-store-api 0.11.1, ecommerce-admin-dashboard 0.7.0 and ecommerce-store-web 0.6.0.
 
 ### Added
 
@@ -15,7 +15,11 @@ First release, planned as 0.1.0. Runs ecommerce-store-api 0.10.0, ecommerce-admi
 - One-shot services: `jwt-keygen` (demo signing key in a volume), `migrate` (API migrations) and `seed` (demo catalog, users and orders, idempotent).
 - `observability` profile with Prometheus and Grafana, provisioned with the API dashboards for the pinned API version.
 - `.env.example` with every variable documented and versions pinned. Missing variables stop Compose with an error.
-- Interim builds from the tagged source for the admin dashboard and the storefront, used only while their images are not published, and for the API seed, which the API image does not ship.
+- Admin and storefront are pulled from GHCR; only the API seed job still builds from the pinned API git tag.
 - `Makefile` shortcuts (`up`, `down`, `reset`, `logs`, `update`, `status`) with the same commands documented for PowerShell.
-- CI: compose validation, yamllint, actionlint, ASCII check, Markdown link check, and a smoke test that starts the stack and checks the API, storefront and admin.
+- CI workflows documented as planned; not shipped in this repository yet.
 - Dependabot for GitHub Actions and the infrastructure images in `compose.yaml`.
+
+### Changed
+
+- Default `API_NODE_ENV` is `staging` so mock checkout works on API 0.11.x.
