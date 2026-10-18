@@ -50,9 +50,9 @@ The checked-in override sample remaps busy host ports so a copy is safe for any 
 
 The API repo generates many env files and secrets (`env:init` with RSA keys). This platform only needs a single demo `.env` copied from `.env.example` (`npm run env:init` / `env:init:force`). No secret generation: demo defaults stay non-secret by design.
 
-### Required CI job names
+### Required CI check
 
-The branch ruleset expects exactly `Validate`, `Smoke Test`, and `CI Status Check`. Rename them only if you update the ruleset in the same change.
+The branch ruleset requires only `CI Status Check`. Parallel jobs (Lint, Pin Sync, Compose Checks, Script Tests, Smoke Test, ...) must all feed that aggregator via `needs`. Rename or split those jobs freely; keep the aggregator name stable unless you update the ruleset in the same change.
 
 ## Out of scope (on purpose)
 

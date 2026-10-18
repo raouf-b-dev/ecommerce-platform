@@ -37,4 +37,4 @@ Do not paste green smoke or verify logs into the chat. Do not run `docker compos
 | Local Compose overlays | [overrides/](overrides/) (copy example to root `compose.override.yaml`) |
 | Script / DX changes | [scripts/README.md](scripts/README.md) |
 | Bumping app versions | `.env.example`, README version matrix, `CHANGELOG.md`, then `npm run check:pins` |
-| Changing CI | [.github/workflows/ci.yml](.github/workflows/ci.yml) (job names must stay `Validate`, `Smoke Test`, `CI Status Check`) |
+| Changing CI | [.github/workflows/ci.yml](.github/workflows/ci.yml) (ruleset requires only `CI Status Check`; keep parallel jobs in its `needs`) |

@@ -34,11 +34,14 @@ Compose lifecycle shortcuts (same idea as the API `d:*` scripts): `d:up`, `d:dow
 
 Then open the storefront and the admin dashboard (`npm run d:urls` / `d:open`, or URLs in the README) and confirm they show data from the API.
 
-CI on every PR runs three required checks (exact names for the branch ruleset):
+CI on every PR runs parallel jobs under one required check (`CI Status Check`):
 
-- **Validate** - ASCII, yamllint, actionlint, pin sync, compose guardrails, `docker compose config`
+- **Lint** - ASCII, yamllint, actionlint
+- **Pin Sync** - `check:pins`
+- **Compose Checks** - compose guardrails and `docker compose config`
+- **Script Tests** - `test:scripts`
 - **Smoke Test** - `docker compose up -d --wait`, HTTP probes, one-shot exit codes
-- **CI Status Check** - aggregator over Validate and Smoke Test
+- **CI Status Check** - aggregator (the only ruleset-required context)
 
 ### Version bumps
 

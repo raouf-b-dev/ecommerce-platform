@@ -15,9 +15,7 @@ Closes #
 
 **CI (required)**
 
-- [ ] Validate
-- [ ] Smoke Test
-- [ ] CI Status Check
+- [ ] CI Status Check (covers Lint, Pin Sync, Compose Checks, Script Tests, Smoke Test)
 
 **Versions**
 
