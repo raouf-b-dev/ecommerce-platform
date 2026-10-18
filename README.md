@@ -109,18 +109,18 @@ The browser calls the API at `http://localhost:3000`. Storefront SSR calls `http
 
 ## Commands
 
-| Task | Command | Make shortcut |
-| :--- | :------ | :------------ |
-| Start and wait for health | `docker compose up -d --wait` | `make up` |
-| Stop, keep data | `docker compose --profile '*' down` | `make down` |
-| Reset: delete data, migrate and seed again | `docker compose --profile '*' down -v --remove-orphans` then `docker compose up -d --wait` | `make reset` |
-| Follow logs | `docker compose logs -f` (one service: `docker compose logs -f api`) | `make logs` or `make logs s=api` |
-| Pull pinned versions and restart | `docker compose pull` then `docker compose up -d --wait --remove-orphans` | `make update` |
-| Status and health | `docker compose --profile '*' ps -a` | `make status` |
-| Observability (Prometheus, Grafana) | `docker compose --profile observability up -d --wait` | `make observability` |
+| Task | Command | npm / Make |
+| :--- | :------ | :--------- |
+| Start and wait for health | `docker compose up -d --wait` | `npm run d:up` / `make up` |
+| Start with observability | `docker compose --profile observability up -d --wait` | `npm run d:up:obs` / `make observability` |
+| Stop, keep data | `docker compose --profile '*' down` | `npm run d:down` / `make down` |
+| Reset: delete data, migrate and seed again | down `-v` then up `--wait` | `npm run d:reset` / `make reset` |
+| Follow logs | `docker compose logs -f` (one service: `docker compose logs -f api`) | `npm run d:logs` / `make logs` or `make logs s=api` |
+| Pull pinned versions and restart | `docker compose pull` then up | `npm run d:update` / `make update` |
+| Status and health | `docker compose --profile '*' ps -a` | `npm run d:status` / `make status` |
 | Pre-PR verify | `npm run verify` | `make verify` |
 | Doctor | `npm run doctor` | `make doctor` |
-| Smoke (stack must be up) | `npm run smoke` | `make smoke` |
+| Smoke (stack must be up) | `npm run smoke` or `npm run d:smoke` | `make smoke` |
 | Bump an app pin | `npm run bump -- api 0.12.0` | `make bump app=api ver=0.12.0` |
 
 `make` is optional. On Windows, run the `docker compose` commands directly in PowerShell. In Windows PowerShell 5.1, run two-step commands one after the other rather than joining them with `&&`.

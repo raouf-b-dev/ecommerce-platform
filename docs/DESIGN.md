@@ -36,6 +36,10 @@ Commit signing is enforced by GitHub rulesets. Forcing `npm install` on first-co
 
 Same contract as the API/admin/web repos: `npm run check:agent` in chat (quiet, scoped); `npm run verify` in your terminal before a PR. Smoke and `docker compose up` stay out of the agent transcript unless you ask.
 
+### `d:*` npm scripts mirror the API habit
+
+The API uses `d:up:dev` / `d:down:dev` across many env files. This repo has one `.env`, so the names are shorter (`d:up`, `d:reset`, `d:up:obs`). They go through `scripts/compose-cmd.mjs` so `.env` is ensured and Windows avoids fragile shell-only wrappers. Makefile targets stay for people who prefer `make`.
+
 ### Required CI job names
 
 The branch ruleset expects exactly `Validate`, `Smoke Test`, and `CI Status Check`. Rename them only if you update the ruleset in the same change.

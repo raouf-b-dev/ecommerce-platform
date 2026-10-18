@@ -17,6 +17,7 @@ Tracks the path to 0.1.0. Pins ecommerce-store-api 0.11.1, ecommerce-admin-dashb
 - `.env.example` with every variable documented and versions pinned. Missing variables stop Compose with an error.
 - Admin, storefront, and seed prefer GHCR pulls; seed falls back to building the API Dockerfile `seed` stage from the pinned tag when the seed image is missing.
 - Lightweight npm gates: `verify`, `check:agent`, `smoke`, `doctor`, `check:pins`, `check:compose`, `check:resolved` (Makefile mirrors).
+- Compose shortcuts: `npm run d:up`, `d:down`, `d:reset`, `d:up:obs`, `d:logs`, `d:status`, `d:update`, and related (via `scripts/compose-cmd.mjs`).
 - `versions.json` as the pin source of truth with `sync-pins` / `bump`.
 - CI workflow with required jobs Validate, Smoke Test, and CI Status Check; optional observability smoke on `workflow_dispatch`; shared `setup-platform` action.
 - `Makefile` shortcuts (`up`, `down`, `reset`, `logs`, `update`, `status`, `verify`, `doctor`, `smoke`, `bump`, `sync-pins`) with the same commands documented for PowerShell.

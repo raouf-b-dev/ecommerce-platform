@@ -28,7 +28,18 @@
     "sync-pins": "node scripts/sync-pins.mjs",
     "bump": "node scripts/bump.mjs",
     "lint:ascii": "node scripts/lint-ascii-prose.cjs",
-    "test:scripts": "node --test scripts/agent-check.spec.mjs scripts/oneshot.spec.mjs scripts/versions.spec.mjs"
+    "test:scripts": "node --test scripts/agent-check.spec.mjs scripts/oneshot.spec.mjs scripts/versions.spec.mjs",
+    "d:up": "node scripts/compose-cmd.mjs up -d --wait",
+    "d:up:obs": "node scripts/compose-cmd.mjs --profile observability up -d --wait",
+    "d:down": "node scripts/compose-cmd.mjs --all-profiles down",
+    "d:reset": "node scripts/compose-cmd.mjs --all-profiles down -v --remove-orphans && node scripts/compose-cmd.mjs up -d --wait",
+    "d:reset:obs": "node scripts/compose-cmd.mjs --all-profiles down -v --remove-orphans && node scripts/compose-cmd.mjs --profile observability up -d --wait",
+    "d:logs": "node scripts/compose-cmd.mjs logs -f",
+    "d:status": "node scripts/compose-cmd.mjs --all-profiles ps -a",
+    "d:config": "node scripts/compose-cmd.mjs config",
+    "d:pull": "node scripts/compose-cmd.mjs pull",
+    "d:update": "node scripts/compose-cmd.mjs pull && node scripts/compose-cmd.mjs up -d --wait --remove-orphans",
+    "d:smoke": "npm run smoke"
   },
   "devDependencies": {
     "yaml": "^2.8.1"

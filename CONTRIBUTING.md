@@ -21,10 +21,11 @@ This repository only wires published releases of the three ecommerce apps togeth
 cp .env.example .env
 npm ci
 npm run verify
-docker compose --profile '*' down -v
-docker compose up -d --wait
-npm run smoke
+npm run d:reset
+npm run d:smoke
 ```
+
+Compose lifecycle shortcuts (same idea as the API `d:*` scripts): `d:up`, `d:down`, `d:reset`, `d:up:obs`, `d:logs`, `d:status`, `d:pull`, `d:update`. They create `.env` from `.env.example` when missing.
 
 Then open the storefront and the admin dashboard (URLs in the README) and confirm they show data from the API.
 
