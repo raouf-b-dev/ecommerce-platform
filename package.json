@@ -1,0 +1,36 @@
+{
+  "name": "ecommerce-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Docker Compose stack that runs the ecommerce API, admin dashboard, and storefront from published images.",
+  "license": "MIT",
+  "author": "Abderaouf Bouzerara <https://github.com/raouf-b-dev>",
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "homepage": "https://github.com/raouf-b-dev/ecommerce-platform#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/raouf-b-dev/ecommerce-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/raouf-b-dev/ecommerce-platform/issues"
+  },
+  "scripts": {
+    "verify": "node scripts/verify.mjs",
+    "check:agent": "node scripts/agent-check.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "check:pins": "node scripts/check-pins.mjs",
+    "check:compose": "node scripts/check-compose.mjs",
+    "check:resolved": "node scripts/check-resolved.mjs",
+    "sync-pins": "node scripts/sync-pins.mjs",
+    "bump": "node scripts/bump.mjs",
+    "lint:ascii": "node scripts/lint-ascii-prose.cjs",
+    "test:scripts": "node --test scripts/agent-check.spec.mjs scripts/oneshot.spec.mjs scripts/versions.spec.mjs"
+  },
+  "devDependencies": {
+    "yaml": "^2.8.1"
+  }
+}

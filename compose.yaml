@@ -9,7 +9,7 @@
 #
 # Startup order (each step waits for the previous one):
 #   postgres, redis, jwt-keygen -> migrate -> seed -> api
-#   -> admin, web-network -> web
+#   -> admin, web
 
 name: ecommerce-platform
 
@@ -134,14 +134,17 @@ services:
 
   seed:
     # One-shot: loads the demo catalog, users, carts and orders. Idempotent, so
-    # it is safe on every `up`. The published API image does not ship the seed
-    # script, so this image is built from the API source at the pinned tag
-    # (Dockerfile stage `build`).
-    image: ecommerce-platform/api-seed:${ECOM_API_VERSION:?set ECOM_API_VERSION in .env}
+    # it is safe on every `up`.
+    # pull_policy: missing = if this image:tag is absent from the *local* Docker
+    # engine, Compose builds `target: seed` from the git context below. It does
+    # not mean "missing on GHCR". Prefer GHCR with `docker compose pull seed`
+    # (or `make update`) before `up`. For a local API clone, override
+    # build.context in compose.override.yaml.
+    image: ghcr.io/raouf-b-dev/ecommerce-store-api-seed:${ECOM_API_VERSION:?set ECOM_API_VERSION in .env}
     build:
-      context: ${API_SOURCE:?set API_SOURCE in .env}
-      target: build
-    pull_policy: build
+      context: https://github.com/raouf-b-dev/ecommerce-store-api.git#v${ECOM_API_VERSION}
+      target: seed
+    pull_policy: missing
     <<: *logging
     entrypoint: *with-jwt-key
     command: ['node_modules/.bin/ts-node', '-r', 'tsconfig-paths/register', 'scripts/seed.ts']
@@ -204,38 +207,20 @@ services:
 
   web:
     image: ghcr.io/raouf-b-dev/ecommerce-store-web:${ECOM_WEB_VERSION:?set ECOM_WEB_VERSION in .env}
-    # Published image; browser and SSR call the host API port via web-network.
+    # Browser uses API_BASE_URL (localhost host port). SSR uses the compose
+    # DNS name via API_INTERNAL_BASE_URL.
     <<: [*restart-policy, *logging]
     environment:
       API_BASE_URL: http://localhost:${API_PORT:?set API_PORT in .env}
-      API_INTERNAL_BASE_URL: http://localhost:${API_PORT}
-    network_mode: service:web-network
+      API_INTERNAL_BASE_URL: http://api:3000
+    ports:
+      - '${WEB_PORT:?set WEB_PORT in .env}:3100'
     healthcheck:
       test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:3100/icon.svg']
       interval: 5s
       timeout: 5s
       retries: 20
       start_period: 20s
-    depends_on:
-      web-network:
-        condition: service_healthy
-
-  web-network:
-    # Owns the storefront's network namespace. The storefront renders on the
-    # server and calls localhost:API_PORT from inside its container, where
-    # nothing listens on that port. This container forwards that loopback
-    # port to the api service and publishes the storefront port.
-    image: alpine/socat:1.8.0.3
-    <<: [*restart-policy, *logging]
-    command: ['TCP-LISTEN:${API_PORT},fork,reuseaddr,bind=127.0.0.1', 'TCP:api:3000']
-    ports:
-      - '${WEB_PORT:?set WEB_PORT in .env}:3100'
-    healthcheck:
-      # Healthy once the forwarded port reaches the API.
-      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:${API_PORT}/health/liveness']
-      interval: 5s
-      timeout: 5s
-      retries: 10
     depends_on:
       api:
         condition: service_healthy

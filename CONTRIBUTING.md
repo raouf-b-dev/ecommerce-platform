@@ -19,19 +19,43 @@ This repository only wires published releases of the three ecommerce apps togeth
 
 ```bash
 cp .env.example .env
-docker compose config --quiet
+npm ci
+npm run verify
 docker compose --profile '*' down -v
 docker compose up -d --wait
+npm run smoke
 ```
 
-Then open the storefront and the admin dashboard (URLs in the README) and confirm they show data from the API. CI runs the same checks plus YAML, workflow, ASCII and link linting.
+Then open the storefront and the admin dashboard (URLs in the README) and confirm they show data from the API.
+
+CI on every PR runs three required checks (exact names for the branch ruleset):
+
+- **Validate** - ASCII, yamllint, actionlint, pin sync, compose guardrails, `docker compose config`
+- **Smoke Test** - `docker compose up -d --wait`, HTTP probes, one-shot exit codes
+- **CI Status Check** - aggregator over Validate and Smoke Test
+
+### Version bumps
+
+When you change an app pin, edit the source of truth and sync:
+
+```bash
+npm run bump -- api 0.12.0
+# or: edit versions.json && npm run sync-pins
+npm run check:pins
+```
+
+That updates `.env.example`, the README matrix, and the CHANGELOG pin sentence together. See [docs/DESIGN.md](docs/DESIGN.md).
 
 ### Rules
 
 - Keep every value in `.env.example` documented and safe for a local demo. Never commit real credentials.
 - A required variable must fail loudly (`${VAR:?message}`), not fall back to a hidden default.
-- Pin images by version. Bumping an app version means updating `.env.example`, the README version matrix and `CHANGELOG.md` together.
-- ASCII only in docs and config.
+- Pin images by version. ASCII only in docs and config.
+- Admin and storefront stay pull-only from GHCR (no `build:` / `dockerfile_inline` on those services).
+
+### Maintainer merge
+
+The `develop`/`master` ruleset requires an approving review from someone other than the last pusher, plus Code Owners. As a solo maintainer, add yourself as a bypass actor on that ruleset (pull request bypass) or use a second GitHub account for the approving review. Dependabot PRs target `master` on purpose so production stays patched even when `develop` is mid-feature; after merging Dependabot to `master`, fast-forward or merge `master` into `develop`.
 
 ## Issues and security
 

@@ -1,8 +1,20 @@
 # ecommerce-platform
 
-Run the full ecommerce system (NestJS API, React admin dashboard, Next.js storefront, Postgres, Redis) on your machine with one Docker Compose command. No Node.js install on the host. Admin and storefront come from GHCR; the one-shot seed job still builds once from the pinned API git tag.
+[![CI](https://github.com/raouf-b-dev/ecommerce-platform/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/raouf-b-dev/ecommerce-platform/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-This repository holds configuration only. The applications live in their own repositories and are pulled as versioned images:
+One Compose file. Three published apps. A working ecommerce demo on your laptop.
+
+```sh
+git clone https://github.com/raouf-b-dev/ecommerce-platform.git
+cd ecommerce-platform
+cp .env.example .env
+docker compose up -d --wait
+```
+
+No Node.js on the host for the happy path. API, admin, storefront, and the demo seed job come from GHCR. Pins live in [`versions.json`](versions.json) and stay honest via `npm run check:pins`. Design rationale: [docs/DESIGN.md](docs/DESIGN.md).
+
+This repository holds **configuration only**. Applications live in their own repos:
 
 | App | Repository | Role |
 | :-- | :--------- | :--- |
@@ -20,7 +32,22 @@ cp .env.example .env
 docker compose up -d --wait
 ```
 
-The last command returns once every service is healthy and the demo data is loaded. Later starts take about 30 seconds. The first start pulls images and builds the seed job from the pinned API tag (a few minutes on a typical connection).
+The last command returns once every service is healthy and the demo data is loaded. Later starts take about 30 seconds. The first start pulls images (a few minutes on a typical connection). If the seed image is not on GHCR yet, Compose builds the API Dockerfile `seed` stage from the pinned release tag once.
+
+Optional local gates (Node 24+):
+
+```sh
+npm ci
+npm run doctor
+npm run verify
+npm run smoke   # after the stack is up
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Try without cloning
+
+A hosted public staging URL is not published yet. When it is, this section will link it. Until then, use Quick start above. A short checkout walkthrough recording may land later under `docs/checkout.gif`.
 
 ## URLs and demo accounts
 
@@ -50,8 +77,7 @@ flowchart LR
 
   subgraph compose [docker compose]
     web[web<br/>Next.js storefront :3100]
-    webnet[web-network<br/>loopback forwarder]
-    admin[admin<br/>nginx + static build :5174]
+    admin[admin<br/>nginx :5174]
     api[api<br/>NestJS :3000]
     pg[(postgres)]
     redis[(redis-stack)]
@@ -63,7 +89,7 @@ flowchart LR
   browser --> web
   browser --> admin
   browser --> api
-  web -- server-side fetch --> webnet --> api
+  web -- SSR API_INTERNAL_BASE_URL --> api
   api --> pg
   api --> redis
   keygen -. signing key .-> api
@@ -79,7 +105,7 @@ Startup order, each step gated on the previous one being healthy or finished:
 4. `api` starts and reports healthy on `/health/readiness` (Postgres and Redis reachable).
 5. `admin` and `web` start.
 
-The browser calls the API directly at `http://localhost:3000`, as both frontends are designed to. The storefront also renders on the server and calls the same URL from inside its container; the `web-network` container forwards that loopback port to the API.
+The browser calls the API at `http://localhost:3000`. Storefront SSR calls `http://api:3000` inside the Compose network (`API_INTERNAL_BASE_URL`).
 
 ## Commands
 
@@ -89,13 +115,19 @@ The browser calls the API directly at `http://localhost:3000`, as both frontends
 | Stop, keep data | `docker compose --profile '*' down` | `make down` |
 | Reset: delete data, migrate and seed again | `docker compose --profile '*' down -v --remove-orphans` then `docker compose up -d --wait` | `make reset` |
 | Follow logs | `docker compose logs -f` (one service: `docker compose logs -f api`) | `make logs` or `make logs s=api` |
-| Pull pinned versions and restart | `docker compose pull --ignore-pull-failures` then `docker compose up -d --wait --remove-orphans` | `make update` |
+| Pull pinned versions and restart | `docker compose pull` then `docker compose up -d --wait --remove-orphans` | `make update` |
 | Status and health | `docker compose --profile '*' ps -a` | `make status` |
 | Observability (Prometheus, Grafana) | `docker compose --profile observability up -d --wait` | `make observability` |
+| Pre-PR verify | `npm run verify` | `make verify` |
+| Doctor | `npm run doctor` | `make doctor` |
+| Smoke (stack must be up) | `npm run smoke` | `make smoke` |
+| Bump an app pin | `npm run bump -- api 0.12.0` | `make bump app=api ver=0.12.0` |
 
 `make` is optional. On Windows, run the `docker compose` commands directly in PowerShell. In Windows PowerShell 5.1, run two-step commands one after the other rather than joining them with `&&`.
 
 The `migrate`, `seed` and `jwt-keygen` services show as `Exited (0)` in the status output. That is expected: they are one-shot jobs.
+
+If `docker compose pull` prints `denied` for a GHCR image, log in (`docker login ghcr.io`) with a token that can read packages for `raouf-b-dev`, or use a public package.
 
 ### Observability
 
@@ -112,7 +144,7 @@ Prometheus scrapes the API `/metrics` endpoint with the `METRICS_API_KEY` bearer
 
 ## Version matrix
 
-Versions are pinned in `.env` (copied from `.env.example`).
+Versions are pinned in [`versions.json`](versions.json) and mirrored into `.env` (via `.env.example`).
 
 | Component | Variable | Pinned | Image | Release |
 | :-------- | :------- | :----- | :---- | :------ |
@@ -120,18 +152,18 @@ Versions are pinned in `.env` (copied from `.env.example`).
 | Admin dashboard | `ECOM_ADMIN_VERSION` | 0.7.0 | [ghcr.io/raouf-b-dev/ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/pkgs/container/ecommerce-admin-dashboard) | [v0.7.0](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/releases/tag/v0.7.0) |
 | Storefront | `ECOM_WEB_VERSION` | 0.6.0 | [ghcr.io/raouf-b-dev/ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web/pkgs/container/ecommerce-store-web) | [v0.6.0](https://github.com/raouf-b-dev/ecommerce-store-web/releases/tag/v0.6.0) |
 
-Admin 0.7.0 and web 0.6.0 support API 0.10.0 or later; this stack pins API 0.11.1.
+Admin 0.7.0 and web 0.6.0 support API 0.10.0 or later; this stack pins API 0.11.1. The seed job uses `ghcr.io/raouf-b-dev/ecommerce-store-api-seed` at the same API version.
 
-Infrastructure images (Postgres 18.4, Redis Stack 7.2.0-v18, Prometheus, Grafana, socat) are pinned in `compose.yaml` and updated by Dependabot.
+Infrastructure images (Postgres 18.4, Redis Stack 7.2.0-v18, Prometheus, Grafana) are pinned in `compose.yaml` and updated by Dependabot (PRs target `master`).
 
 ## Upgrading
 
 1. Check the release notes of the app you want to upgrade, including which API versions the frontends support.
-2. Change the version in `.env` (and in `.env.example` if you are updating this repository).
-3. Pull and restart:
+2. Bump the pin: `npm run bump -- api 0.12.0` (or edit `versions.json` and run `npm run sync-pins`).
+3. Copy `.env.example` into your local `.env` if needed, then:
 
    ```sh
-   docker compose pull --ignore-pull-failures
+   docker compose pull
    docker compose up -d --wait --remove-orphans
    ```
 
@@ -141,9 +173,7 @@ Migrations run automatically on start. To go back to an older API version, reset
 
 Every variable is documented in [.env.example](.env.example). Compose stops with an error that names the variable if one is missing from `.env`.
 
-For personal changes that you do not want to commit (extra ports, resource limits), create `compose.override.yaml`. Compose merges it automatically and Git ignores it.
-
-To build the demo seed from a local API clone instead of the pinned release tag, point `API_SOURCE` at that folder, for example `API_SOURCE=../ecommerce-store-api`, then run `docker compose up -d --wait`.
+For personal changes that you do not want to commit (extra ports, resource limits, building the seed from a local API clone), copy [`compose.override.example.yaml`](compose.override.example.yaml) to `compose.override.yaml`. Compose merges it automatically and Git ignores it.
 
 ## Troubleshooting
 
@@ -157,7 +187,7 @@ The port is in use or, on Windows, reserved by Hyper-V (check with `netsh interf
 Run `docker compose ps -a` and `docker compose logs migrate seed api` to see which step failed. A failed migration usually means the volume holds data from a newer API version; reset with `docker compose --profile '*' down -v`.
 
 **The first start is slow or a build fails while downloading packages**
-The first start builds the seed job from the pinned API tag (and may pull packages for that build). Check the network connection, then run `docker compose up -d --wait` again; finished build steps are cached.
+Pulls and (if needed) the one-time seed image build need network access. Check the connection, then run `docker compose up -d --wait` again; finished build steps are cached.
 
 **Product photos show a letter placeholder in the storefront**
 Web 0.6.0 publishes with `NEXT_PUBLIC_ALLOW_LOOPBACK_ORIGIN=true`. If placeholders remain, see [Known limitations](#known-limitations). The admin dashboard and the API (`http://localhost:3000/media/demo/v1/...`) show the photos.
@@ -166,15 +196,13 @@ Web 0.6.0 publishes with `NEXT_PUBLIC_ALLOW_LOOPBACK_ORIGIN=true`. If placeholde
 Expected: demo accounts must change their password at first sign-in. Every restart resets them to the documented passwords.
 
 **Apple Silicon: images run slowly or warn about the platform**
-The API image is published for `linux/amd64` only and runs under emulation. Enable Rosetta for x86/amd64 emulation in Docker Desktop settings.
+API images published after the seed/multi-arch Docker pipeline change are `linux/amd64` and `linux/arm64`. Older tags such as `0.11.1` may still be amd64-only and run under emulation; enable Rosetta in Docker Desktop if needed.
 
 ## Known limitations
 
-These come from the current app releases, not from this repository, and are tracked for the app repositories:
-
-- The API image does not include the demo seed script, so the `seed` job builds the API Dockerfile `build` stage from the pinned release tag on first start.
+- Until `ecommerce-store-api-seed` is published for the pinned API tag, the first start builds the seed stage from the API git tag once.
 - Demo accounts must change password at first sign-in; every seed reset restores the documented passwords.
-- Apple Silicon: the API image is `linux/amd64` and may run under emulation (enable Rosetta in Docker Desktop if needed).
+- Hosted staging URL and checkout walkthrough GIF are not shipped yet (see Try without cloning).
 
 ## Development
 
@@ -184,7 +212,7 @@ This repository is for running released versions. To work on an app, clone its r
 - Admin dashboard: [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard#readme)
 - Storefront: [ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web#readme)
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for changes to this repository and [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for changes to this repository, [docs/DESIGN.md](docs/DESIGN.md) for intentional trade-offs, and [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
 
 ## License
 

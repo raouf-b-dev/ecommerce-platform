@@ -12,3 +12,9 @@ compose.override.yml
 Thumbs.db
 .vscode/
 .idea/
+
+# Cursor local state
+.cursor/
+
+# npm
+node_modules/

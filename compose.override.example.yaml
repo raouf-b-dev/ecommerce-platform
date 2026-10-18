@@ -1,0 +1,11 @@
+# Optional local overrides. Copy to compose.override.yaml (gitignored).
+# Compose merges this file automatically with compose.yaml.
+#
+# Example: build the seed job from a sibling API clone instead of GHCR / git tag.
+
+services:
+  seed:
+    build:
+      context: ../ecommerce-store-api
+      target: seed
+    pull_policy: build

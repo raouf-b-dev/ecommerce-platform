@@ -15,11 +15,15 @@ Tracks the path to 0.1.0. Pins ecommerce-store-api 0.11.1, ecommerce-admin-dashb
 - One-shot services: `jwt-keygen` (demo signing key in a volume), `migrate` (API migrations) and `seed` (demo catalog, users and orders, idempotent).
 - `observability` profile with Prometheus and Grafana, provisioned with the API dashboards for the pinned API version.
 - `.env.example` with every variable documented and versions pinned. Missing variables stop Compose with an error.
-- Admin and storefront are pulled from GHCR; only the API seed job still builds from the pinned API git tag.
-- `Makefile` shortcuts (`up`, `down`, `reset`, `logs`, `update`, `status`) with the same commands documented for PowerShell.
-- CI workflows documented as planned; not shipped in this repository yet.
-- Dependabot for GitHub Actions and the infrastructure images in `compose.yaml`.
+- Admin, storefront, and seed prefer GHCR pulls; seed falls back to building the API Dockerfile `seed` stage from the pinned tag when the seed image is missing.
+- Lightweight npm gates: `verify`, `check:agent`, `smoke`, `doctor`, `check:pins`, `check:compose`, `check:resolved` (Makefile mirrors).
+- `versions.json` as the pin source of truth with `sync-pins` / `bump`.
+- CI workflow with required jobs Validate, Smoke Test, and CI Status Check; optional observability smoke on `workflow_dispatch`; shared `setup-platform` action.
+- `Makefile` shortcuts (`up`, `down`, `reset`, `logs`, `update`, `status`, `verify`, `doctor`, `smoke`, `bump`, `sync-pins`) with the same commands documented for PowerShell.
+- Dependabot for GitHub Actions, infrastructure images in `compose.yaml`, and npm (PRs target `master`).
+- `docs/DESIGN.md` and `compose.override.example.yaml` for first-comer and contributor DX.
 
 ### Changed
 
 - Default `API_NODE_ENV` is `staging` so mock checkout works on API 0.11.x.
+- Storefront uses `API_INTERNAL_BASE_URL=http://api:3000`; removed the `web-network` socat sidecar.
