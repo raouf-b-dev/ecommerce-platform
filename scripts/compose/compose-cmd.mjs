@@ -2,23 +2,21 @@
 /**
  * Ensure .env exists, then run `docker compose` with the remaining argv.
  *
- *   node scripts/compose-cmd.mjs up -d --wait
- *   node scripts/compose-cmd.mjs --all-profiles down
+ *   node scripts/compose/compose-cmd.mjs up -d --wait
+ *   node scripts/compose/compose-cmd.mjs --all-profiles down
  *
  * --all-profiles expands to --profile * without relying on the shell to quote *.
  */
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { ensureEnv } from './ensure-env.mjs';
-import { runDocker } from './lib/run.mjs';
+import { REPO_ROOT } from '../lib/repo-root.mjs';
+import { runDocker } from '../lib/run.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-ensureEnv(root);
+ensureEnv(REPO_ROOT, { quiet: true });
 
 const raw = process.argv.slice(2);
 if (raw.length === 0) {
   process.stderr.write(
-    'usage: node scripts/compose-cmd.mjs [--all-profiles] <docker compose args...>\n',
+    'usage: node scripts/compose/compose-cmd.mjs [--all-profiles] <docker compose args...>\n',
   );
   process.exit(2);
 }
@@ -32,7 +30,7 @@ for (const arg of raw) {
   composeArgs.push(arg);
 }
 
-const probe = runDocker(['version'], { cwd: root });
+const probe = runDocker(['version'], { cwd: REPO_ROOT });
 if (!probe.ok) {
   process.stderr.write(
     `docker is not available:\n${probe.stderr || probe.stdout || probe.error?.message || ''}\n`,
@@ -41,7 +39,7 @@ if (!probe.ok) {
 }
 
 const result = runDocker(['compose', ...composeArgs], {
-  cwd: root,
+  cwd: REPO_ROOT,
   stdio: 'inherit',
 });
 process.exit(result.status);

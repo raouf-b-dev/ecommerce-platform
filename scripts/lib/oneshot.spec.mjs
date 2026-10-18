@@ -5,7 +5,7 @@ import {
   isContainerUp,
   isOneShotSuccess,
   parseComposePsJson,
-} from './lib/oneshot.mjs';
+} from './oneshot.mjs';
 
 test('isOneShotSuccess accepts ExitCode 0', () => {
   assert.equal(isOneShotSuccess({ ExitCode: 0 }), true);

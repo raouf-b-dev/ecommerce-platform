@@ -5,11 +5,10 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { parseDocument } from 'yaml';
+import { REPO_ROOT } from '../lib/repo-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const text = fs.readFileSync(path.join(root, 'compose.yaml'), 'utf8');
+const text = fs.readFileSync(path.join(REPO_ROOT, 'compose.yaml'), 'utf8');
 const doc = parseDocument(text);
 const data = doc.toJS();
 const services = data?.services;

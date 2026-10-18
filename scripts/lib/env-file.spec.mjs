@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { demoUrls, formatUrlLines, loadEnvFile } from './lib/env-file.mjs';
+import { demoUrls, formatUrlLines, loadEnvFile } from './env-file.mjs';
 
 test('loadEnvFile reads ports and skips comments', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'platform-env-'));

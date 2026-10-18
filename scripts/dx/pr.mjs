@@ -3,21 +3,18 @@
  * Pre-PR helper: run verify, then smoke if the stack looks up, else print next steps.
  */
 import { spawnSync } from 'node:child_process';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { findServiceRow, isContainerUp, parseComposePsJson } from './lib/oneshot.mjs';
-import { runDocker } from './lib/run.mjs';
-
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+import { findServiceRow, isContainerUp, parseComposePsJson } from '../lib/oneshot.mjs';
+import { REPO_ROOT } from '../lib/repo-root.mjs';
+import { runDocker } from '../lib/run.mjs';
 
 function runNpm(script) {
   const npmCli = process.env.npm_execpath;
   if (!npmCli) {
-    process.stderr.write('scripts/pr.mjs must be run via `npm run pr`\n');
+    process.stderr.write('scripts/dx/pr.mjs must be run via `npm run pr`\n');
     process.exit(1);
   }
   const result = spawnSync(process.execPath, [npmCli, 'run', script], {
-    cwd: root,
+    cwd: REPO_ROOT,
     stdio: 'inherit',
     env: process.env,
     windowsHide: true,
@@ -32,7 +29,7 @@ if (verifyCode !== 0) {
 }
 
 const ps = runDocker(['compose', '--profile', '*', 'ps', '-a', '--format', 'json'], {
-  cwd: root,
+  cwd: REPO_ROOT,
 });
 let rows = [];
 if (ps.ok) {

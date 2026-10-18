@@ -20,5 +20,10 @@ test('compose touch plan uses compose-config script (no shell &&)', () => {
   const plan = selectPlatformCommands(['compose.yaml'], ['compose.yaml']);
   const compose = plan.commands.find(([label]) => label === 'compose config');
   assert.ok(compose);
-  assert.equal(compose[1], 'node scripts/compose-config.mjs');
+  assert.equal(compose[1], 'node scripts/compose/compose-config.mjs');
+});
+
+test('isComposeTouch recognizes config and overrides', () => {
+  assert.equal(isComposeTouch('config/observability/prometheus.yml'), true);
+  assert.equal(isComposeTouch('overrides/compose.override.example.yaml'), true);
 });

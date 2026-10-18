@@ -4,12 +4,11 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { demoUrls, formatUrlLines, loadEnvFile } from './lib/env-file.mjs';
-import { findServiceRow, isContainerUp, parseComposePsJson } from './lib/oneshot.mjs';
-import { runDocker } from './lib/run.mjs';
+import { demoUrls, formatUrlLines, loadEnvFile } from '../lib/env-file.mjs';
+import { findServiceRow, isContainerUp, parseComposePsJson } from '../lib/oneshot.mjs';
+import { REPO_ROOT } from '../lib/repo-root.mjs';
+import { runDocker } from '../lib/run.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const lines = [];
 let failed = false;
 
@@ -18,17 +17,17 @@ function check(label, ok, detail) {
   if (!ok) failed = true;
 }
 
-const docker = runDocker(['version', '--format', '{{.Server.Version}}'], { cwd: root });
+const docker = runDocker(['version', '--format', '{{.Server.Version}}'], { cwd: REPO_ROOT });
 check('docker engine', docker.ok, (docker.stdout || '').trim() || docker.stderr.trim());
 
-const compose = runDocker(['compose', 'version'], { cwd: root });
+const compose = runDocker(['compose', 'version'], { cwd: REPO_ROOT });
 check(
   'docker compose plugin',
   compose.ok,
   (compose.stdout || '').trim().split(/\r?\n/)[0] || compose.stderr.trim(),
 );
 
-const envExists = fs.existsSync(path.join(root, '.env'));
+const envExists = fs.existsSync(path.join(REPO_ROOT, '.env'));
 check('.env present', envExists, envExists ? 'found' : 'run: npm run setup');
 
 if (process.platform === 'win32') {
@@ -42,7 +41,7 @@ lines.push('tip: first start pulls GHCR images and may build the seed image once
 let apiUp = false;
 if (docker.ok && envExists) {
   const ps = runDocker(['compose', '--profile', '*', 'ps', '-a', '--format', 'json'], {
-    cwd: root,
+    cwd: REPO_ROOT,
   });
   if (ps.ok) {
     let rows = [];
@@ -61,7 +60,7 @@ if (docker.ok && envExists) {
 
 if (!failed && envExists) {
   try {
-    const urls = demoUrls(loadEnvFile(root));
+    const urls = demoUrls(loadEnvFile(REPO_ROOT));
     lines.push('urls:');
     lines.push(...formatUrlLines(urls));
   } catch {

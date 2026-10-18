@@ -12,7 +12,7 @@ help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-14s %s\n", $$1, $$2}'
 
 env: ## Create .env from .env.example (keeps an existing .env)
-	@test -f .env || cp .env.example .env
+	$(NPM) run env:init
 
 setup: ## Ensure .env, print URLs and next command
 	$(NPM) run setup

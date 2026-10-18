@@ -13,8 +13,9 @@ import {
   runQuiet,
   selectPlatformCommands,
 } from './agent-output.mjs';
+import { REPO_ROOT } from '../lib/repo-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = REPO_ROOT;
 const bases = ['origin/develop', 'develop'];
 
 if (isDirect()) main();
@@ -36,8 +37,8 @@ function main() {
   const plan = selectPlatformCommands(scope.files, existing);
   const commands = [...plan.commands];
 
-  if (scope.files.some((file) => /^scripts\/agent-/.test(file))) {
-    commands.unshift(['agent-check tests', 'node --test scripts/agent-check.spec.mjs']);
+  if (scope.files.some((file) => /^scripts\/gates\/agent-/.test(file))) {
+    commands.unshift(['agent-check tests', 'node --test scripts/gates/agent-check.spec.mjs']);
   }
 
   const lines = [

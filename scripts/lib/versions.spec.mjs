@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { readVersions, writeVersions } from './lib/versions.mjs';
+import { readVersions, writeVersions } from './versions.mjs';
 
 test('readVersions rejects bad semver', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ecom-versions-'));

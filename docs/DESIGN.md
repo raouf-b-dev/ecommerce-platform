@@ -38,7 +38,17 @@ Same contract as the API/admin/web repos: `npm run check:agent` in chat (quiet, 
 
 ### `d:*` npm scripts mirror the API habit
 
-The API uses `d:up:dev` / `d:down:dev` across many env files. This repo has one `.env`, so the names are shorter (`d:up`, `d:reset`, `d:up:obs`). They go through `scripts/compose-cmd.mjs` so `.env` is ensured and Windows avoids fragile shell-only wrappers. Makefile targets stay for people who prefer `make`. Extra DX without more env variants: `npm run setup`, louder `doctor` (`next:` plus URLs), `d:urls` / `d:open`, service-filtered logs (`npm run d:logs -- api`), and `npm run pr` (verify then smoke when up).
+The API uses `d:up:dev` / `d:down:dev` across many env files. This repo has one `.env`, so the names are shorter (`d:up`, `d:reset`, `d:up:obs`). They go through `scripts/compose/compose-cmd.mjs` so `.env` is ensured and Windows avoids fragile shell-only wrappers. Makefile targets stay for people who prefer `make`. Extra DX without more env variants: `npm run setup`, louder `doctor` (`next:` plus URLs), `d:urls` / `d:open`, service-filtered logs (`npm run d:logs -- api`), and `npm run pr` (verify then smoke when up).
+
+### Layout follows compose-platform practice, not an app tree
+
+Root stays flat (Saleor-platform / self-hosted compose style): the product is `compose.yaml` + `.env.example`. Scripts are grouped by job under `scripts/{compose,dx,gates,pins,lib}` (see `scripts/README.md`). Observability YAML lives in `config/observability/`. Optional local overlays live as samples under `overrides/` and are copied to root `compose.override.yaml`. No `src/`, no fake service packages.
+
+The checked-in override sample remaps busy host ports so a copy is safe for any clone. Building seed from a sibling `../ecommerce-store-api` checkout is a maintainer-only trick: do not document it as the default override (most users never clone the API next to this repo).
+
+### One `.env`, not an API-style env matrix
+
+The API repo generates many env files and secrets (`env:init` with RSA keys). This platform only needs a single demo `.env` copied from `.env.example` (`npm run env:init` / `env:init:force`). No secret generation: demo defaults stay non-secret by design.
 
 ### Required CI job names
 

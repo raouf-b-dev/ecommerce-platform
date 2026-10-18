@@ -15,7 +15,7 @@ npm run check:agent
 A pass is one summary (`agent-check: ok`). A failure is the error block only. `agent-check: skipped` is not a pass. Quiet one-off commands:
 
 ```sh
-node scripts/agent-run.mjs -- <command>
+node scripts/gates/agent-run.mjs -- <command>
 ```
 
 Do not paste green smoke or verify logs into the chat. Do not run `docker compose up` or `npm run smoke` in the chat unless the user asked for a live stack check.
@@ -33,5 +33,8 @@ Do not paste green smoke or verify logs into the chat. Do not run `docker compos
 | When you are | Load |
 | :--- | :--- |
 | Changing compose services or ports | [compose.yaml](compose.yaml), [.env.example](.env.example), README architecture |
+| Changing observability mounts | [config/observability/](config/observability/), `compose.yaml` configs |
+| Local Compose overlays | [overrides/](overrides/) (copy example to root `compose.override.yaml`) |
+| Script / DX changes | [scripts/README.md](scripts/README.md) |
 | Bumping app versions | `.env.example`, README version matrix, `CHANGELOG.md`, then `npm run check:pins` |
 | Changing CI | [.github/workflows/ci.yml](.github/workflows/ci.yml) (job names must stay `Validate`, `Smoke Test`, `CI Status Check`) |

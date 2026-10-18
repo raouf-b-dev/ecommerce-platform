@@ -3,15 +3,13 @@
  * Assert the *resolved* compose config keeps admin/web pull-only.
  * Catches regressions that only appear after variable interpolation.
  */
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { ensureEnv } from './ensure-env.mjs';
-import { runDocker } from './lib/run.mjs';
+import { ensureEnv } from '../compose/ensure-env.mjs';
+import { REPO_ROOT } from '../lib/repo-root.mjs';
+import { runDocker } from '../lib/run.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-ensureEnv(root);
+ensureEnv(REPO_ROOT, { quiet: true });
 
-const result = runDocker(['compose', 'config', '--format', 'json'], { cwd: root });
+const result = runDocker(['compose', 'config', '--format', 'json'], { cwd: REPO_ROOT });
 if (!result.ok) {
   process.stderr.write(`check-resolved: compose config failed\n${result.stderr || result.stdout}\n`);
   process.exit(1);

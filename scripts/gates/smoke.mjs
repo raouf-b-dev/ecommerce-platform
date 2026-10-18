@@ -6,13 +6,12 @@
  * Expects the stack already up (`docker compose up -d --wait`).
  */
 import { spawnSync } from 'node:child_process';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { loadEnvFile } from './lib/env-file.mjs';
-import { findServiceRow, isOneShotSuccess, parseComposePsJson } from './lib/oneshot.mjs';
-import { runDocker } from './lib/run.mjs';
+import { loadEnvFile } from '../lib/env-file.mjs';
+import { findServiceRow, isOneShotSuccess, parseComposePsJson } from '../lib/oneshot.mjs';
+import { runDocker } from '../lib/run.mjs';
+import { REPO_ROOT } from '../lib/repo-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = REPO_ROOT;
 
 function listComposeRows() {
   const result = runDocker(['compose', '--profile', '*', 'ps', '-a', '--format', 'json'], {
@@ -46,7 +45,7 @@ async function probe(url, timeoutMs = 10000) {
 }
 
 function runCheckResolved() {
-  const result = spawnSync(process.execPath, ['scripts/check-resolved.mjs'], {
+  const result = spawnSync(process.execPath, ['scripts/gates/check-resolved.mjs'], {
     cwd: root,
     encoding: 'utf8',
     windowsHide: true,

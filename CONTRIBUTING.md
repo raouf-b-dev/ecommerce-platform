@@ -19,6 +19,7 @@ This repository only wires published releases of the three ecommerce apps togeth
 
 ```bash
 npm ci
+npm run env:init
 npm run setup
 npm run pr
 # or step by step:
@@ -29,7 +30,7 @@ npm run d:smoke
 
 `npm run pr` runs `verify`, then `smoke` when the API container is already up; otherwise it prints the next commands.
 
-Compose lifecycle shortcuts (same idea as the API `d:*` scripts): `d:up`, `d:down`, `d:reset`, `d:up:obs`, `d:logs` (filter: `npm run d:logs -- api`), `d:status`, `d:pull`, `d:update`, `d:urls`, `d:open`. They create `.env` from `.env.example` when missing. `npm run doctor` prints a `next:` line after its checks.
+Compose lifecycle shortcuts (same idea as the API `d:*` scripts): `d:up`, `d:down`, `d:reset`, `d:up:obs`, `d:logs` (filter: `npm run d:logs -- api`), `d:status`, `d:pull`, `d:update`, `d:urls`, `d:open`. They create `.env` from `.env.example` when missing. `npm run doctor` prints a `next:` line after its checks. Script sources live under `scripts/{compose,dx,gates,pins,lib}` (see [scripts/README.md](scripts/README.md)).
 
 Then open the storefront and the admin dashboard (`npm run d:urls` / `d:open`, or URLs in the README) and confirm they show data from the API.
 

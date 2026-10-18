@@ -7,10 +7,10 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { APPS, envKey, readVersions } from './lib/versions.mjs';
+import { APPS, envKey, readVersions } from '../lib/versions.mjs';
+import { REPO_ROOT } from '../lib/repo-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = REPO_ROOT;
 const versions = readVersions(root);
 const SEMVER = String.raw`(\d+\.\d+\.\d+)`;
 

@@ -5,6 +5,12 @@
 
 One Compose file. Three published apps. A working ecommerce demo on your laptop.
 
+This repo is **configuration only** (a compose platform). The API, admin dashboard, and storefront ship as versioned GHCR images. Design notes: [docs/DESIGN.md](docs/DESIGN.md).
+
+## Run the demo
+
+Needs Docker Desktop (Windows / macOS) or Docker Engine with Compose v2.24+ (Linux), and Git.
+
 ```sh
 git clone https://github.com/raouf-b-dev/ecommerce-platform.git
 cd ecommerce-platform
@@ -12,66 +18,62 @@ cp .env.example .env
 docker compose up -d --wait
 ```
 
-Or with Node 24+ already installed: `npm run setup` then `npm run d:up`.
-
-No Node.js on the host for the happy path. API, admin, storefront, and the demo seed job come from GHCR. Pins live in [`versions.json`](versions.json) and stay honest via `npm run check:pins`. Design rationale: [docs/DESIGN.md](docs/DESIGN.md).
-
-This repository holds **configuration only**. Applications live in their own repos:
-
-| App | Repository | Role |
-| :-- | :--------- | :--- |
-| API | [ecommerce-store-api](https://github.com/raouf-b-dev/ecommerce-store-api) | NestJS modular monolith: catalog, carts, checkout saga, inventory, payments (mock), RBAC |
-| Admin | [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard) | React and Vite operator dashboard |
-| Web | [ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web) | Next.js App Router storefront |
-
-## Quick start
-
-Requirements: Docker Desktop (Windows, macOS) or Docker Engine with the Compose plugin v2.24 or later (Linux), and Git. The same commands work in PowerShell and in bash.
+With Node 24+ (creates `.env`, prints URLs, then starts the stack):
 
 ```sh
-git clone https://github.com/raouf-b-dev/ecommerce-platform.git; cd ecommerce-platform
-cp .env.example .env
-docker compose up -d --wait
-```
-
-The last command returns once every service is healthy and the demo data is loaded. Later starts take about 30 seconds. The first start pulls images (a few minutes on a typical connection). If the seed image is not on GHCR yet, Compose builds the API Dockerfile `seed` stage from the pinned release tag once.
-
-Optional local gates (Node 24+):
-
-```sh
+git clone https://github.com/raouf-b-dev/ecommerce-platform.git
+cd ecommerce-platform
 npm ci
 npm run setup
-npm run doctor
-npm run verify
-npm run smoke   # after the stack is up
-npm run pr      # verify, then smoke when the stack is up
+npm run d:up
+npm run d:open
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+First start pulls images (a few minutes). Later starts are about 30 seconds. If the seed image is not on GHCR yet, Compose builds the API `seed` stage from the pinned tag once.
 
-## Try without cloning
-
-A hosted public staging URL is not published yet. When it is, this section will link it. Until then, use Quick start above. A short checkout walkthrough recording may land later under `docs/checkout.gif`.
-
-## URLs and demo accounts
+## Open the apps
 
 | What | URL |
 | :--- | :-- |
 | Storefront | http://localhost:3100 |
-| Admin dashboard | http://localhost:5174 |
+| Admin | http://localhost:5174 |
 | API | http://localhost:3000 |
-| API docs (Swagger) | http://localhost:3000/api/docs |
-| API health | http://localhost:3000/health |
+| API docs | http://localhost:3000/api/docs |
 
-| Role | Email | Password | Use it in |
-| :--- | :---- | :------- | :-------- |
-| Super administrator | `superadmin@store.local` | `SuperAdmin123!` | Admin dashboard |
-| Administrator | `admin@store.local` | `Admin123!` | Admin dashboard |
+Or: `npm run d:urls` / `npm run d:open` (ports come from `.env`).
+
+| Role | Email | Password | App |
+| :--- | :---- | :------- | :-- |
+| Super admin | `superadmin@store.local` | `SuperAdmin123!` | Admin |
+| Admin | `admin@store.local` | `Admin123!` | Admin |
 | Customer | `customer@store.local` | `Customer123!` | Storefront |
 
-These accounts come from the API demo seed ([seeding guide](https://github.com/raouf-b-dev/ecommerce-store-api/blob/master/docs/development/SEEDING.md)). Each one must choose a new password at first sign-in. The seed runs on every start and resets these three accounts to the passwords above.
+Demo accounts must set a new password at first sign-in. Every seed reset restores the passwords above. Checkout uses the API mock payment provider (no Stripe / card details).
 
-Checkout uses the API mock payment provider: an order moves from `pending_payment` to `confirmed` a few seconds after checkout, with no card details or Stripe account.
+## Everyday commands
+
+Prefer the npm shortcuts (they ensure `.env` exists and work the same on Windows, macOS, and Linux). Raw `docker compose` is fine too.
+
+| Task | npm | docker compose |
+| :--- | :--- | :--- |
+| Create / refresh `.env` | `npm run env:init` (`env:init:force` to overwrite) | `cp .env.example .env` |
+| Start and wait | `npm run d:up` | `docker compose up -d --wait` |
+| Start + Grafana / Prometheus | `npm run d:up:obs` | `docker compose --profile observability up -d --wait` |
+| Stop (keep data) | `npm run d:down` | `docker compose --profile '*' down` |
+| Wipe data and start fresh | `npm run d:reset` | down `-v`, then up `--wait` |
+| Logs (one service) | `npm run d:logs -- api` | `docker compose logs -f api` |
+| Status | `npm run d:status` | `docker compose --profile '*' ps -a` |
+| Pull pins and restart | `npm run d:update` | `pull` then up `--remove-orphans` |
+| Smoke probes | `npm run d:smoke` | (stack must be up) |
+| Doctor / pre-PR | `npm run doctor` / `npm run pr` | |
+
+`make` mirrors the same tasks if you prefer it. `migrate`, `seed`, and `jwt-keygen` showing `Exited (0)` is expected (one-shot jobs).
+
+If `docker compose pull` says `denied`, run `docker login ghcr.io` with a token that can read `raouf-b-dev` packages (or wait until the package is public).
+
+### Observability
+
+`npm run d:up:obs` then open Grafana http://localhost:3001 (`admin` / `admin` from `.env`) and Prometheus http://localhost:9090.
 
 ## Architecture
 
@@ -80,11 +82,11 @@ flowchart LR
   browser([Browser])
 
   subgraph compose [docker compose]
-    web[web<br/>Next.js storefront :3100]
-    admin[admin<br/>nginx :5174]
-    api[api<br/>NestJS :3000]
+    web[web :3100]
+    admin[admin :5174]
+    api[api :3000]
     pg[(postgres)]
-    redis[(redis-stack)]
+    redis[(redis)]
     keygen[[jwt-keygen]]
     migrate[[migrate]]
     seed[[seed]]
@@ -93,134 +95,65 @@ flowchart LR
   browser --> web
   browser --> admin
   browser --> api
-  web -- SSR API_INTERNAL_BASE_URL --> api
+  web -- SSR --> api
   api --> pg
   api --> redis
-  keygen -. signing key .-> api
+  keygen -. key .-> api
   migrate -. schema .-> pg
   seed -. demo data .-> pg
 ```
 
-Startup order, each step gated on the previous one being healthy or finished:
+Startup: postgres + redis + jwt-keygen → migrate → seed → api (healthy) → admin + web. Browsers use `http://localhost:3000`; storefront SSR uses `http://api:3000` inside Compose.
 
-1. `postgres` and `redis` start; `jwt-keygen` creates a demo RS256 signing key in the `jwt_keys` volume on first start.
-2. `migrate` applies the API database migrations and exits.
-3. `seed` loads the demo catalog, users, carts, orders and payments and exits. It is idempotent.
-4. `api` starts and reports healthy on `/health/readiness` (Postgres and Redis reachable).
-5. `admin` and `web` start.
+App sources (not in this repo):
 
-The browser calls the API at `http://localhost:3000`. Storefront SSR calls `http://api:3000` inside the Compose network (`API_INTERNAL_BASE_URL`).
+| App | Repository |
+| :-- | :--------- |
+| API | [ecommerce-store-api](https://github.com/raouf-b-dev/ecommerce-store-api) |
+| Admin | [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard) |
+| Web | [ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web) |
 
-## Commands
+## Versions
 
-| Task | Command | npm / Make |
-| :--- | :------ | :--------- |
-| Start and wait for health | `docker compose up -d --wait` | `npm run d:up` / `make up` |
-| Start with observability | `docker compose --profile observability up -d --wait` | `npm run d:up:obs` / `make observability` |
-| Stop, keep data | `docker compose --profile '*' down` | `npm run d:down` / `make down` |
-| Reset: delete data, migrate and seed again | down `-v` then up `--wait` | `npm run d:reset` / `make reset` |
-| Follow logs | `docker compose logs -f` (one service: `docker compose logs -f api`) | `npm run d:logs` / `npm run d:logs -- api` / `make logs` or `make logs s=api` |
-| Print demo URLs | (ports from `.env`) | `npm run d:urls` / `make urls` |
-| Open demo URLs | | `npm run d:open` / `make open` |
-| Pull pinned versions and restart | `docker compose pull` then up | `npm run d:update` / `make update` |
-| Status and health | `docker compose --profile '*' ps -a` | `npm run d:status` / `make status` |
-| First-comer setup | ensure `.env`, print URLs and next step | `npm run setup` / `make setup` |
-| Pre-PR verify | `npm run verify` | `make verify` |
-| Pre-PR helper | verify, then smoke if stack is up | `npm run pr` / `make pr` |
-| Doctor | `npm run doctor` | `make doctor` |
-| Smoke (stack must be up) | `npm run smoke` or `npm run d:smoke` | `make smoke` |
-| Bump an app pin | `npm run bump -- api 0.12.0` | `make bump app=api ver=0.12.0` |
-
-`make` is optional. On Windows, run the `docker compose` commands directly in PowerShell. In Windows PowerShell 5.1, run two-step commands one after the other rather than joining them with `&&`.
-
-The `migrate`, `seed` and `jwt-keygen` services show as `Exited (0)` in the status output. That is expected: they are one-shot jobs.
-
-If `docker compose pull` prints `denied` for a GHCR image, log in (`docker login ghcr.io`) with a token that can read packages for `raouf-b-dev`, or use a public package.
-
-### Observability
-
-```sh
-docker compose --profile observability up -d --wait
-```
-
-| What | URL | Login |
-| :--- | :-- | :---- |
-| Grafana | http://localhost:3001 | `admin` / `admin` (from `.env`) |
-| Prometheus | http://localhost:9090 | none |
-
-Prometheus scrapes the API `/metrics` endpoint with the `METRICS_API_KEY` bearer token. Grafana is provisioned with the dashboards from the API repository at the pinned API version. Tracing (Tempo) and log shipping (Loki) from the API's own development stack are not included.
-
-## Version matrix
-
-Versions are pinned in [`versions.json`](versions.json) and mirrored into `.env` (via `.env.example`).
+Pins live in [`versions.json`](versions.json) and are mirrored into `.env.example` / this matrix via `npm run sync-pins` or `npm run bump -- <api|admin|web> <x.y.z>`.
 
 | Component | Variable | Pinned | Image | Release |
 | :-------- | :------- | :----- | :---- | :------ |
-| API | `ECOM_API_VERSION` | 0.11.1 | [ghcr.io/raouf-b-dev/ecommerce-store-api](https://github.com/raouf-b-dev/ecommerce-store-api/pkgs/container/ecommerce-store-api) | [v0.11.1](https://github.com/raouf-b-dev/ecommerce-store-api/releases/tag/v0.11.1) |
-| Admin dashboard | `ECOM_ADMIN_VERSION` | 0.7.0 | [ghcr.io/raouf-b-dev/ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/pkgs/container/ecommerce-admin-dashboard) | [v0.7.0](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/releases/tag/v0.7.0) |
-| Storefront | `ECOM_WEB_VERSION` | 0.6.0 | [ghcr.io/raouf-b-dev/ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web/pkgs/container/ecommerce-store-web) | [v0.6.0](https://github.com/raouf-b-dev/ecommerce-store-web/releases/tag/v0.6.0) |
+| API | `ECOM_API_VERSION` | 0.11.1 | [ecommerce-store-api](https://github.com/raouf-b-dev/ecommerce-store-api/pkgs/container/ecommerce-store-api) | [v0.11.1](https://github.com/raouf-b-dev/ecommerce-store-api/releases/tag/v0.11.1) |
+| Admin dashboard | `ECOM_ADMIN_VERSION` | 0.7.0 | [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/pkgs/container/ecommerce-admin-dashboard) | [v0.7.0](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/releases/tag/v0.7.0) |
+| Storefront | `ECOM_WEB_VERSION` | 0.6.0 | [ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web/pkgs/container/ecommerce-store-web) | [v0.6.0](https://github.com/raouf-b-dev/ecommerce-store-web/releases/tag/v0.6.0) |
 
-Admin 0.7.0 and web 0.6.0 support API 0.10.0 or later; this stack pins API 0.11.1. The seed job uses `ghcr.io/raouf-b-dev/ecommerce-store-api-seed` at the same API version.
-
-Infrastructure images (Postgres 18.4, Redis Stack 7.2.0-v18, Prometheus, Grafana) are pinned in `compose.yaml` and updated by Dependabot (PRs target `master`).
-
-## Upgrading
-
-1. Check the release notes of the app you want to upgrade, including which API versions the frontends support.
-2. Bump the pin: `npm run bump -- api 0.12.0` (or edit `versions.json` and run `npm run sync-pins`).
-3. Copy `.env.example` into your local `.env` if needed, then:
-
-   ```sh
-   docker compose pull
-   docker compose up -d --wait --remove-orphans
-   ```
-
-Migrations run automatically on start. To go back to an older API version, reset the data as well (`docker compose --profile '*' down -v`), because migrations are not rolled back.
+To upgrade: bump the pin, then `npm run d:update`. Downgrade needs a data reset (`npm run d:reset`) because migrations are not rolled back.
 
 ## Configuration
 
-Every variable is documented in [.env.example](.env.example). Compose stops with an error that names the variable if one is missing from `.env`.
+Every variable is documented in [.env.example](.env.example). Missing keys fail loud in Compose.
 
-For personal changes that you do not want to commit (extra ports, resource limits, building the seed from a local API clone), copy [`compose.override.example.yaml`](compose.override.example.yaml) to `compose.override.yaml`. Compose merges it automatically and Git ignores it.
+Personal overrides: copy [`overrides/compose.override.example.yaml`](overrides/compose.override.example.yaml) to root `compose.override.yaml` (gitignored). The sample remaps busy host ports; it does not require cloning the API.
 
 ## Troubleshooting
 
-**`required variable ... is missing a value` or `set ... in .env`**
-`.env` is missing or incomplete. Copy it again from `.env.example` (`cp .env.example .env`) or add the named variable.
+**Missing `.env` / required variable** - `npm run env:init` or `cp .env.example .env`.
 
-**`Bind for 0.0.0.0:3000 failed` or `An attempt was made to access a socket in a way forbidden by its access permissions`**
-The port is in use or, on Windows, reserved by Hyper-V (check with `netsh interface ipv4 show excludedportrange protocol=tcp`). Change `API_PORT`, `WEB_PORT` or `ADMIN_PORT` in `.env`, then restart with `docker compose up -d --wait` so admin and web pick up the updated `API_BASE_URL`.
+**Port already in use (or Windows Hyper-V reserve)** - change `API_PORT` / `WEB_PORT` / `ADMIN_PORT` in `.env`, or use the port remap override sample, then `npm run d:up`.
 
-**`dependency failed to start` or `service "migrate" didn't complete successfully`**
-Run `docker compose ps -a` and `docker compose logs migrate seed api` to see which step failed. A failed migration usually means the volume holds data from a newer API version; reset with `docker compose --profile '*' down -v`.
+**migrate / seed failed** - `npm run d:logs -- migrate` (or `seed` / `api`). Often fixed with `npm run d:reset`.
 
-**The first start is slow or a build fails while downloading packages**
-Pulls and (if needed) the one-time seed image build need network access. Check the connection, then run `docker compose up -d --wait` again; finished build steps are cached.
+**Slow first start** - image pulls (and maybe one seed build). Retry `npm run d:up`.
 
-**Product photos show a letter placeholder in the storefront**
-Web 0.6.0 publishes with `NEXT_PUBLIC_ALLOW_LOOPBACK_ORIGIN=true`. If placeholders remain, see [Known limitations](#known-limitations). The admin dashboard and the API (`http://localhost:3000/media/demo/v1/...`) show the photos.
+**Forced password change after login** - expected for demo accounts; seed restores the table passwords on each reset.
 
-**Sign-in works but the next page asks for a new password**
-Expected: demo accounts must change their password at first sign-in. Every restart resets them to the documented passwords.
-
-**Apple Silicon: images run slowly or warn about the platform**
-API images published after the seed/multi-arch Docker pipeline change are `linux/amd64` and `linux/arm64`. Older tags such as `0.11.1` may still be amd64-only and run under emulation; enable Rosetta in Docker Desktop if needed.
+**Apple Silicon slow / platform warning** - newer API tags are multi-arch; older ones may be amd64-only under emulation.
 
 ## Known limitations
 
-- Until `ecommerce-store-api-seed` is published for the pinned API tag, the first start builds the seed stage from the API git tag once.
-- Demo accounts must change password at first sign-in; every seed reset restores the documented passwords.
-- Hosted staging URL and checkout walkthrough GIF are not shipped yet (see Try without cloning).
+- Seed image may still build once per machine until `ecommerce-store-api-seed` is published for the pinned tag.
+- No public staging URL or checkout GIF yet.
+- This repo does not host application source or OpenAPI.
 
-## Development
+## Contributing
 
-This repository is for running released versions. To work on an app, clone its repository and follow its README:
-
-- API: [ecommerce-store-api](https://github.com/raouf-b-dev/ecommerce-store-api#readme)
-- Admin dashboard: [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard#readme)
-- Storefront: [ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web#readme)
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for changes to this repository, [docs/DESIGN.md](docs/DESIGN.md) for intentional trade-offs, and [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+See [CONTRIBUTING.md](CONTRIBUTING.md). For app code, open the matching repository above. Security: [SECURITY.md](SECURITY.md).
 
 ## License
 

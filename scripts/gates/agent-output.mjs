@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { hasYamllint } from './lib/run.mjs';
+import { hasYamllint } from '../lib/run.mjs';
 
 export const WIDE = 30;
 
@@ -96,7 +96,10 @@ export function isComposeTouch(file) {
     file === 'compose.yml' ||
     file === '.env.example' ||
     file === 'Makefile' ||
-    file.startsWith('scripts/')
+    file === 'versions.json' ||
+    file.startsWith('scripts/') ||
+    file.startsWith('config/') ||
+    file.startsWith('overrides/')
   );
 }
 
@@ -105,7 +108,9 @@ export function isYamlTouch(file) {
     file.endsWith('.yml') ||
     file.endsWith('.yaml') ||
     file === '.yamllint.yaml' ||
-    file.startsWith('.github/')
+    file.startsWith('.github/') ||
+    file.startsWith('config/') ||
+    file.startsWith('overrides/')
   );
 }
 
@@ -117,22 +122,25 @@ export function selectPlatformCommands(allFiles, existing) {
     allFiles.every((file) => isDoc(file) || isYamlTouch(file) || file.startsWith('scripts/') || file === 'package.json' || file === 'package-lock.json');
 
   if (existing.length > 0) {
-    commands.push(['ascii-prose', 'node scripts/lint-ascii-prose.cjs']);
+    commands.push(['ascii-prose', 'node scripts/gates/lint-ascii-prose.cjs']);
   }
 
   if (!wide && existing.some(isYamlTouch) && hasYamllint()) {
-    commands.push(['yamllint', 'yamllint -c .yamllint.yaml compose.yaml .github']);
+    commands.push([
+      'yamllint',
+      'yamllint -c .yamllint.yaml compose.yaml .github config overrides',
+    ]);
   }
 
   if (!wide && existing.some(isComposeTouch)) {
-    commands.push(['check-pins', 'node scripts/check-pins.mjs']);
-    commands.push(['check-compose', 'node scripts/check-compose.mjs']);
-    commands.push(['check-resolved', 'node scripts/check-resolved.mjs']);
-    commands.push(['compose config', 'node scripts/compose-config.mjs']);
+    commands.push(['check-pins', 'node scripts/gates/check-pins.mjs']);
+    commands.push(['check-compose', 'node scripts/gates/check-compose.mjs']);
+    commands.push(['check-resolved', 'node scripts/gates/check-resolved.mjs']);
+    commands.push(['compose config', 'node scripts/compose/compose-config.mjs']);
   }
 
   if (existing.some((file) => /^scripts\/.+\.spec\.mjs$/.test(file))) {
-    commands.push(['script tests', 'node --test scripts/**/*.spec.mjs']);
+    commands.push(['script tests', 'npm run test:scripts']);
   }
 
   return { commands, wide, toolingOnly };

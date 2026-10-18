@@ -6,12 +6,11 @@
  *   npm run bump -- admin 0.8.0
  *   npm run bump -- web 0.7.0
  */
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { APPS, readVersions, writeVersions } from './lib/versions.mjs';
+import { APPS, readVersions, writeVersions } from '../lib/versions.mjs';
+import { REPO_ROOT } from '../lib/repo-root.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = REPO_ROOT;
 const [, , app, version] = process.argv;
 
 if (!APPS.includes(app) || !version) {
@@ -31,7 +30,7 @@ const previous = current[app];
 current[app] = version;
 writeVersions(root, current);
 
-const sync = spawnSync(process.execPath, ['scripts/sync-pins.mjs'], {
+const sync = spawnSync(process.execPath, ['scripts/pins/sync-pins.mjs'], {
   cwd: root,
   stdio: 'inherit',
   windowsHide: true,
