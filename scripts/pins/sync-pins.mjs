@@ -42,19 +42,24 @@ function syncReadme() {
     }
     text = text.replace(re, `$1${ver}$3`);
   }
-  // Release column links: /tag/vX.Y.Z (best effort)
-  text = text.replace(
-    /(ecommerce-store-api\/releases\/tag\/v)\d+\.\d+\.\d+/,
-    `$1${versions.api}`,
-  );
-  text = text.replace(
-    /(ecommerce-admin-dashboard\/releases\/tag\/v)\d+\.\d+\.\d+/,
-    `$1${versions.admin}`,
-  );
-  text = text.replace(
-    /(ecommerce-store-web\/releases\/tag\/v)\d+\.\d+\.\d+/,
-    `$1${versions.web}`,
-  );
+  // Release column: [vX.Y.Z](.../releases/tag/vX.Y.Z) - label and href together
+  const releaseLinks = [
+    ['ecommerce-store-api', versions.api],
+    ['ecommerce-admin-dashboard', versions.admin],
+    ['ecommerce-store-web', versions.web],
+  ];
+  for (const [repo, ver] of releaseLinks) {
+    const re = new RegExp(
+      `\\[v\\d+\\.\\d+\\.\\d+\\]\\(https://github\\.com/raouf-b-dev/${repo}/releases/tag/v\\d+\\.\\d+\\.\\d+\\)`,
+    );
+    if (!re.test(text)) {
+      throw new Error(`README.md: missing release link for ${repo}`);
+    }
+    text = text.replace(
+      re,
+      `[v${ver}](https://github.com/raouf-b-dev/${repo}/releases/tag/v${ver})`,
+    );
+  }
   fs.writeFileSync(file, text, 'utf8');
 }
 

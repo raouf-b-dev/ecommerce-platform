@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Tracks the path to 0.1.0. Pins ecommerce-store-api 0.11.1, ecommerce-admin-dashboard 0.7.0 and ecommerce-store-web 0.6.0.
+Tracks the path to 0.1.0. Pins ecommerce-store-api 0.11.2, ecommerce-admin-dashboard 0.7.0 and ecommerce-store-web 0.6.0.
 
 ### Added
 

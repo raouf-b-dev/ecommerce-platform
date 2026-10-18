@@ -73,8 +73,41 @@ function readChangelogPins() {
   return { api: match[1], admin: match[2], web: match[3] };
 }
 
+function readReadmeReleaseLinks() {
+  const text = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+  const specs = [
+    ['api', 'ecommerce-store-api'],
+    ['admin', 'ecommerce-admin-dashboard'],
+    ['web', 'ecommerce-store-web'],
+  ];
+  const out = {};
+  for (const [app, repo] of specs) {
+    const re = new RegExp(
+      String.raw`\[v` +
+        SEMVER +
+        String.raw`\]\(https://github\.com/raouf-b-dev/` +
+        repo +
+        String.raw`/releases/tag/v` +
+        SEMVER +
+        String.raw`\)`,
+    );
+    const match = text.match(re);
+    if (!match) {
+      throw new Error(`README release link for ${repo} not found`);
+    }
+    if (match[1] !== match[2]) {
+      throw new Error(
+        `README release link for ${repo}: label v${match[1]} != href v${match[2]}`,
+      );
+    }
+    out[app] = match[1];
+  }
+  return out;
+}
+
 const env = readEnvExample();
 const readme = readReadmePins();
+const readmeReleases = readReadmeReleaseLinks();
 const changelog = readChangelogPins();
 const errors = [];
 
@@ -83,6 +116,7 @@ for (const app of APPS) {
   for (const [label, got] of [
     ['.env.example', env[app]],
     ['README', readme[app]],
+    ['README release link', readmeReleases[app]],
     ['CHANGELOG', changelog[app]],
   ]) {
     if (got !== want) {
