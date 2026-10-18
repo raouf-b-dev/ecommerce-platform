@@ -1,0 +1,19 @@
+name: Setup platform
+description: Node 24, npm ci, and .env from .env.example (checkout must already exist)
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js 24
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: 24
+        cache: npm
+
+    - name: Install npm dependencies
+      shell: bash
+      run: npm ci
+
+    - name: Create .env from example
+      shell: bash
+      run: cp .env.example .env

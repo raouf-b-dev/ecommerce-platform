@@ -1,0 +1,198 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [master, main, develop]
+  push:
+    branches: [master, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup platform
+        uses: ./.github/actions/setup-platform
+
+      - name: Install yamllint
+        run: pip install --user yamllint==1.37.1
+
+      - name: Install actionlint
+        run: |
+          bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/v1.7.7/scripts/download-actionlint.bash)
+          sudo mv actionlint /usr/local/bin/actionlint
+
+      - name: ASCII prose lint
+        run: npm run lint:ascii
+
+      - name: Yamllint
+        run: yamllint -c .yamllint.yaml compose.yaml .github config overrides
+
+      - name: Actionlint
+        run: actionlint
+
+  pins:
+    name: Pin Sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup platform
+        uses: ./.github/actions/setup-platform
+
+      - name: Pin sync
+        run: npm run check:pins
+
+  compose:
+    name: Compose Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup platform
+        uses: ./.github/actions/setup-platform
+
+      - name: Compose guardrails
+        run: npm run check:compose
+
+      - name: Resolved compose guardrails
+        run: npm run check:resolved
+
+      - name: Compose config
+        run: docker compose config --quiet
+
+      - name: Compose config (observability profile)
+        run: docker compose --profile observability config --quiet
+
+  script-tests:
+    name: Script Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup platform
+        uses: ./.github/actions/setup-platform
+
+      - name: Script unit tests
+        run: npm run test:scripts
+
+  smoke:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup platform
+        uses: ./.github/actions/setup-platform
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start stack
+        run: docker compose up -d --wait
+
+      - name: Smoke probes
+        run: npm run smoke
+
+      - name: Tear down
+        if: always()
+        run: docker compose --profile '*' down -v --remove-orphans
+
+  ci:
+    name: CI Status Check
+    runs-on: ubuntu-latest
+    needs: [lint, pins, compose, script-tests, smoke]
+    if: always()
+    steps:
+      - name: Check all jobs status
+        env:
+          LINT_STATUS: ${{ needs.lint.result }}
+          PINS_STATUS: ${{ needs.pins.result }}
+          COMPOSE_STATUS: ${{ needs.compose.result }}
+          SCRIPT_TESTS_STATUS: ${{ needs.script-tests.result }}
+          SMOKE_STATUS: ${{ needs.smoke.result }}
+        run: |
+          echo "lint: $LINT_STATUS"
+          echo "pins: $PINS_STATUS"
+          echo "compose: $COMPOSE_STATUS"
+          echo "script-tests: $SCRIPT_TESTS_STATUS"
+          echo "smoke: $SMOKE_STATUS"
+          failed=false
+          for status in "$LINT_STATUS" "$PINS_STATUS" "$COMPOSE_STATUS" "$SCRIPT_TESTS_STATUS" "$SMOKE_STATUS"; do
+            if [ "$status" = "failure" ] || [ "$status" = "cancelled" ]; then
+              echo "::error::required job $status"
+              failed=true
+            elif [ "$status" != "success" ]; then
+              echo "::error::required job was $status"
+              failed=true
+            fi
+          done
+          if [ "$failed" = true ]; then
+            echo "One or more required jobs did not pass."
+            exit 1
+          fi
+          echo "All checks passed successfully!"
+
+  observability-smoke:
+    name: Observability Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup platform
+        uses: ./.github/actions/setup-platform
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Start stack with observability
+        run: docker compose --profile observability up -d --wait
+
+      - name: Probe Grafana and Prometheus
+        run: |
+          curl -fsS -o /dev/null http://127.0.0.1:3001/api/health
+          curl -fsS -o /dev/null http://127.0.0.1:9090/-/healthy
+
+      - name: Tear down
+        if: always()
+        run: docker compose --profile '*' down -v --remove-orphans

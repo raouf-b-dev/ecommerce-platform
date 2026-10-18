@@ -1,0 +1,17 @@
+# Optional local overrides. Copy to the repo root as compose.override.yaml
+# (gitignored). Compose merges that file automatically with compose.yaml.
+#
+# Safe demo: shift host ports when 3000 / 3100 / 5174 are already taken.
+# Edit .env ports instead when you can; this override is for cases where you
+# want Compose-level remapping without touching shared .env.example.
+
+services:
+  api:
+    ports:
+      - '3001:3000'
+  admin:
+    ports:
+      - '5175:80'
+  web:
+    ports:
+      - '3101:3000'
