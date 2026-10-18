@@ -38,7 +38,7 @@ Same contract as the API/admin/web repos: `npm run check:agent` in chat (quiet, 
 
 ### `d:*` npm scripts mirror the API habit
 
-The API uses `d:up:dev` / `d:down:dev` across many env files. This repo has one `.env`, so the names are shorter (`d:up`, `d:reset`, `d:up:obs`). They go through `scripts/compose-cmd.mjs` so `.env` is ensured and Windows avoids fragile shell-only wrappers. Makefile targets stay for people who prefer `make`.
+The API uses `d:up:dev` / `d:down:dev` across many env files. This repo has one `.env`, so the names are shorter (`d:up`, `d:reset`, `d:up:obs`). They go through `scripts/compose-cmd.mjs` so `.env` is ensured and Windows avoids fragile shell-only wrappers. Makefile targets stay for people who prefer `make`. Extra DX without more env variants: `npm run setup`, louder `doctor` (`next:` plus URLs), `d:urls` / `d:open`, service-filtered logs (`npm run d:logs -- api`), and `npm run pr` (verify then smoke when up).
 
 ### Required CI job names
 

@@ -18,16 +18,20 @@ This repository only wires published releases of the three ecommerce apps togeth
 ## Before you open a PR
 
 ```bash
-cp .env.example .env
 npm ci
+npm run setup
+npm run pr
+# or step by step:
 npm run verify
 npm run d:reset
 npm run d:smoke
 ```
 
-Compose lifecycle shortcuts (same idea as the API `d:*` scripts): `d:up`, `d:down`, `d:reset`, `d:up:obs`, `d:logs`, `d:status`, `d:pull`, `d:update`. They create `.env` from `.env.example` when missing.
+`npm run pr` runs `verify`, then `smoke` when the API container is already up; otherwise it prints the next commands.
 
-Then open the storefront and the admin dashboard (URLs in the README) and confirm they show data from the API.
+Compose lifecycle shortcuts (same idea as the API `d:*` scripts): `d:up`, `d:down`, `d:reset`, `d:up:obs`, `d:logs` (filter: `npm run d:logs -- api`), `d:status`, `d:pull`, `d:update`, `d:urls`, `d:open`. They create `.env` from `.env.example` when missing. `npm run doctor` prints a `next:` line after its checks.
+
+Then open the storefront and the admin dashboard (`npm run d:urls` / `d:open`, or URLs in the README) and confirm they show data from the API.
 
 CI on every PR runs three required checks (exact names for the branch ruleset):
 

@@ -18,6 +18,8 @@
     "url": "https://github.com/raouf-b-dev/ecommerce-platform/issues"
   },
   "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "pr": "node scripts/pr.mjs",
     "verify": "node scripts/verify.mjs",
     "check:agent": "node scripts/agent-check.mjs",
     "smoke": "node scripts/smoke.mjs",
@@ -28,7 +30,7 @@
     "sync-pins": "node scripts/sync-pins.mjs",
     "bump": "node scripts/bump.mjs",
     "lint:ascii": "node scripts/lint-ascii-prose.cjs",
-    "test:scripts": "node --test scripts/agent-check.spec.mjs scripts/oneshot.spec.mjs scripts/versions.spec.mjs",
+    "test:scripts": "node --test scripts/agent-check.spec.mjs scripts/oneshot.spec.mjs scripts/versions.spec.mjs scripts/env-file.spec.mjs",
     "d:up": "node scripts/compose-cmd.mjs up -d --wait",
     "d:up:obs": "node scripts/compose-cmd.mjs --profile observability up -d --wait",
     "d:down": "node scripts/compose-cmd.mjs --all-profiles down",
@@ -39,6 +41,8 @@
     "d:config": "node scripts/compose-cmd.mjs config",
     "d:pull": "node scripts/compose-cmd.mjs pull",
     "d:update": "node scripts/compose-cmd.mjs pull && node scripts/compose-cmd.mjs up -d --wait --remove-orphans",
+    "d:urls": "node scripts/urls.mjs",
+    "d:open": "node scripts/urls.mjs --open",
     "d:smoke": "npm run smoke"
   },
   "devDependencies": {

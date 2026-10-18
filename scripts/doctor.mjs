@@ -5,6 +5,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { demoUrls, formatUrlLines, loadEnvFile } from './lib/env-file.mjs';
+import { findServiceRow, isContainerUp, parseComposePsJson } from './lib/oneshot.mjs';
 import { runDocker } from './lib/run.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -27,7 +29,7 @@ check(
 );
 
 const envExists = fs.existsSync(path.join(root, '.env'));
-check('.env present', envExists, envExists ? 'found' : 'copy .env.example to .env');
+check('.env present', envExists, envExists ? 'found' : 'run: npm run setup');
 
 if (process.platform === 'win32') {
   lines.push(
@@ -36,5 +38,44 @@ if (process.platform === 'win32') {
 }
 
 lines.push('tip: first start pulls GHCR images and may build the seed image once');
+
+let apiUp = false;
+if (docker.ok && envExists) {
+  const ps = runDocker(['compose', '--profile', '*', 'ps', '-a', '--format', 'json'], {
+    cwd: root,
+  });
+  if (ps.ok) {
+    let rows = [];
+    try {
+      rows = parseComposePsJson(ps.stdout);
+    } catch {
+      rows = [];
+    }
+    const api = findServiceRow(rows, 'api');
+    apiUp = isContainerUp(api);
+    lines.push(
+      `${apiUp ? 'ok' : 'note'}: api container (${apiUp ? 'running' : 'not running'})`,
+    );
+  }
+}
+
+if (!failed && envExists) {
+  try {
+    const urls = demoUrls(loadEnvFile(root));
+    lines.push('urls:');
+    lines.push(...formatUrlLines(urls));
+  } catch {
+    // ignore; .env may be incomplete
+  }
+}
+
+if (failed) {
+  lines.push('next: fix the failures above, then npm run setup');
+} else if (!apiUp) {
+  lines.push('next: npm run d:up');
+} else {
+  lines.push('next: npm run d:smoke');
+}
+
 process.stdout.write(`${lines.join('\n')}\n`);
 process.exit(failed ? 1 : 0);

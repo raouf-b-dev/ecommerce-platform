@@ -12,6 +12,8 @@ cp .env.example .env
 docker compose up -d --wait
 ```
 
+Or with Node 24+ already installed: `npm run setup` then `npm run d:up`.
+
 No Node.js on the host for the happy path. API, admin, storefront, and the demo seed job come from GHCR. Pins live in [`versions.json`](versions.json) and stay honest via `npm run check:pins`. Design rationale: [docs/DESIGN.md](docs/DESIGN.md).
 
 This repository holds **configuration only**. Applications live in their own repos:
@@ -38,9 +40,11 @@ Optional local gates (Node 24+):
 
 ```sh
 npm ci
+npm run setup
 npm run doctor
 npm run verify
 npm run smoke   # after the stack is up
+npm run pr      # verify, then smoke when the stack is up
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -115,10 +119,14 @@ The browser calls the API at `http://localhost:3000`. Storefront SSR calls `http
 | Start with observability | `docker compose --profile observability up -d --wait` | `npm run d:up:obs` / `make observability` |
 | Stop, keep data | `docker compose --profile '*' down` | `npm run d:down` / `make down` |
 | Reset: delete data, migrate and seed again | down `-v` then up `--wait` | `npm run d:reset` / `make reset` |
-| Follow logs | `docker compose logs -f` (one service: `docker compose logs -f api`) | `npm run d:logs` / `make logs` or `make logs s=api` |
+| Follow logs | `docker compose logs -f` (one service: `docker compose logs -f api`) | `npm run d:logs` / `npm run d:logs -- api` / `make logs` or `make logs s=api` |
+| Print demo URLs | (ports from `.env`) | `npm run d:urls` / `make urls` |
+| Open demo URLs | | `npm run d:open` / `make open` |
 | Pull pinned versions and restart | `docker compose pull` then up | `npm run d:update` / `make update` |
 | Status and health | `docker compose --profile '*' ps -a` | `npm run d:status` / `make status` |
+| First-comer setup | ensure `.env`, print URLs and next step | `npm run setup` / `make setup` |
 | Pre-PR verify | `npm run verify` | `make verify` |
+| Pre-PR helper | verify, then smoke if stack is up | `npm run pr` / `make pr` |
 | Doctor | `npm run doctor` | `make doctor` |
 | Smoke (stack must be up) | `npm run smoke` or `npm run d:smoke` | `make smoke` |
 | Bump an app pin | `npm run bump -- api 0.12.0` | `make bump app=api ver=0.12.0` |

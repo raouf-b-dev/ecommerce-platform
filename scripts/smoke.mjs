@@ -6,29 +6,13 @@
  * Expects the stack already up (`docker compose up -d --wait`).
  */
 import { spawnSync } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { findServiceRow, isOneShotSuccess } from './lib/oneshot.mjs';
+import { loadEnvFile } from './lib/env-file.mjs';
+import { findServiceRow, isOneShotSuccess, parseComposePsJson } from './lib/oneshot.mjs';
 import { runDocker } from './lib/run.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-
-function loadEnvFile() {
-  const envPath = path.join(root, '.env');
-  if (!fs.existsSync(envPath)) {
-    throw new Error('.env missing; copy .env.example first');
-  }
-  const out = {};
-  for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eq = trimmed.indexOf('=');
-    if (eq < 0) continue;
-    out[trimmed.slice(0, eq)] = trimmed.slice(eq + 1);
-  }
-  return out;
-}
 
 function listComposeRows() {
   const result = runDocker(['compose', '--profile', '*', 'ps', '-a', '--format', 'json'], {
@@ -37,11 +21,7 @@ function listComposeRows() {
   if (!result.ok) {
     throw new Error(`docker compose ps failed: ${result.stderr || result.stdout}`);
   }
-  return (result.stdout || '')
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => JSON.parse(line));
+  return parseComposePsJson(result.stdout);
 }
 
 function assertOneShotOk(name, rows) {
@@ -84,7 +64,7 @@ async function main() {
   runCheckResolved();
   results.push(['resolved-config', 'ok']);
 
-  const env = loadEnvFile();
+  const env = loadEnvFile(root);
   const apiPort = env.API_PORT || '3000';
   const adminPort = env.ADMIN_PORT || '5174';
   const webPort = env.WEB_PORT || '3100';

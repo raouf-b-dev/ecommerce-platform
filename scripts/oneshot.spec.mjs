@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { findServiceRow, isOneShotSuccess } from './lib/oneshot.mjs';
+import {
+  findServiceRow,
+  isContainerUp,
+  isOneShotSuccess,
+  parseComposePsJson,
+} from './lib/oneshot.mjs';
 
 test('isOneShotSuccess accepts ExitCode 0', () => {
   assert.equal(isOneShotSuccess({ ExitCode: 0 }), true);
@@ -23,4 +28,17 @@ test('findServiceRow matches Service or Name', () => {
   ];
   assert.equal(findServiceRow(rows, 'seed')?.Service, 'seed');
   assert.equal(findServiceRow(rows, 'missing'), undefined);
+});
+
+test('parseComposePsJson accepts NDJSON and arrays', () => {
+  const ndjson = '{"Service":"api"}\n{"Service":"web"}\n';
+  assert.deepEqual(parseComposePsJson(ndjson).map((r) => r.Service), ['api', 'web']);
+  assert.deepEqual(parseComposePsJson('[{"Service":"api"}]').map((r) => r.Service), ['api']);
+  assert.deepEqual(parseComposePsJson(''), []);
+});
+
+test('isContainerUp detects running/up', () => {
+  assert.equal(isContainerUp({ State: 'running' }), true);
+  assert.equal(isContainerUp({ Status: 'Up 2 minutes' }), true);
+  assert.equal(isContainerUp({ State: 'exited', Status: 'Exited (0)' }), false);
 });

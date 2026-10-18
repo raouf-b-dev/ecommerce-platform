@@ -6,13 +6,16 @@ COMPOSE ?= docker compose
 NPM ?= npm
 
 .DEFAULT_GOAL := help
-.PHONY: help env up down reset logs update status config observability verify doctor smoke bump sync-pins
+.PHONY: help env setup up down reset logs update status config urls open observability verify doctor smoke pr bump sync-pins
 
 help: ## List targets
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-14s %s\n", $$1, $$2}'
 
 env: ## Create .env from .env.example (keeps an existing .env)
 	@test -f .env || cp .env.example .env
+
+setup: ## Ensure .env, print URLs and next command
+	$(NPM) run setup
 
 up: env ## Start the stack and wait until it is healthy
 	$(COMPOSE) up -d --wait
@@ -37,6 +40,12 @@ status: ## Show services and health
 config: env ## Validate and print the resolved compose file
 	$(COMPOSE) config
 
+urls: ## Print demo URLs from .env
+	$(NPM) run d:urls
+
+open: ## Open demo URLs in the browser
+	$(NPM) run d:open
+
 observability: env ## Start the stack plus Prometheus and Grafana
 	$(COMPOSE) --profile observability up -d --wait
 
@@ -48,6 +57,9 @@ doctor: ## Check Docker, Compose, and .env
 
 smoke: env ## HTTP probes against a running stack
 	$(NPM) run smoke
+
+pr: ## Verify, then smoke when the stack is up
+	$(NPM) run pr
 
 sync-pins: ## Apply versions.json to .env.example, README, CHANGELOG
 	$(NPM) run sync-pins
