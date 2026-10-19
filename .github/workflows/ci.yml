@@ -102,6 +102,21 @@ jobs:
       - name: Script unit tests
         run: npm run test:scripts
 
+  # Same idea as ecommerce-store-api: surface vulnerable dependency changes on PRs
+  # before merge. Complements Dependabot; skipped on push/dispatch.
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+
   smoke:
     name: Smoke Test
     runs-on: ubuntu-latest
@@ -135,32 +150,49 @@ jobs:
   ci:
     name: CI Status Check
     runs-on: ubuntu-latest
-    needs: [lint, pins, compose, script-tests, smoke]
+    needs: [lint, pins, compose, script-tests, dependency-review, smoke]
     if: always()
     steps:
       - name: Check all jobs status
         env:
+          EVENT_NAME: ${{ github.event_name }}
           LINT_STATUS: ${{ needs.lint.result }}
           PINS_STATUS: ${{ needs.pins.result }}
           COMPOSE_STATUS: ${{ needs.compose.result }}
           SCRIPT_TESTS_STATUS: ${{ needs.script-tests.result }}
+          DEPENDENCY_REVIEW_STATUS: ${{ needs.dependency-review.result }}
           SMOKE_STATUS: ${{ needs.smoke.result }}
         run: |
+          echo "event: $EVENT_NAME"
           echo "lint: $LINT_STATUS"
           echo "pins: $PINS_STATUS"
           echo "compose: $COMPOSE_STATUS"
           echo "script-tests: $SCRIPT_TESTS_STATUS"
+          echo "dependency-review: $DEPENDENCY_REVIEW_STATUS"
           echo "smoke: $SMOKE_STATUS"
           failed=false
-          for status in "$LINT_STATUS" "$PINS_STATUS" "$COMPOSE_STATUS" "$SCRIPT_TESTS_STATUS" "$SMOKE_STATUS"; do
+          check() {
+            local name="$1" status="$2" require_success="$3"
+            echo "$name: $status"
             if [ "$status" = "failure" ] || [ "$status" = "cancelled" ]; then
-              echo "::error::required job $status"
+              echo "::error::$name $status"
               failed=true
-            elif [ "$status" != "success" ]; then
-              echo "::error::required job was $status"
+            elif [ "$require_success" = true ] && [ "$status" != "success" ]; then
+              echo "::error::$name was $status but must succeed on this run"
               failed=true
             fi
-          done
+          }
+          # dependency-review only runs on pull_request; skipped elsewhere is OK.
+          dep_required=false
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            dep_required=true
+          fi
+          check lint "$LINT_STATUS" true
+          check pins "$PINS_STATUS" true
+          check compose "$COMPOSE_STATUS" true
+          check script-tests "$SCRIPT_TESTS_STATUS" true
+          check dependency-review "$DEPENDENCY_REVIEW_STATUS" "$dep_required"
+          check smoke "$SMOKE_STATUS" true
           if [ "$failed" = true ]; then
             echo "One or more required jobs did not pass."
             exit 1

@@ -7,7 +7,8 @@
 #   PUBLIC_BASE_URL, CORS_ALLOWED_ORIGINS, AUTH_COOKIE_SAMESITE,
 #   DEMO_RESET_ENABLED, DEMO_RESET_TOKEN
 #
-# Postgres/Redis stay compose-internal. API binds loopback for Cloudflare Tunnel.
+# Postgres/Redis stay compose-internal (no host ports in compose.yaml).
+# API already binds 127.0.0.1 in compose.yaml for Cloudflare Tunnel.
 # Observability profile stays opt-in (off unless you pass --profile observability).
 
 x-hosted-api-env: &hosted-api-env
@@ -24,12 +25,6 @@ services:
   web:
     profiles: ['local-ui']
 
-  postgres:
-    ports: !override []
-
-  redis:
-    ports: !override []
-
   migrate:
     environment:
       <<: *hosted-api-env
@@ -41,5 +36,3 @@ services:
   api:
     environment:
       <<: *hosted-api-env
-    ports: !override
-      - '127.0.0.1:${API_PORT:?set API_PORT in .env}:3000'

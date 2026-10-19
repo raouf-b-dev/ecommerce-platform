@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# GitHub Actions secret staging (copy from .secrets.example via env:init:secrets)
+.secrets
+
 # Personal Compose overrides (docker compose merges this file automatically)
 compose.override.yaml
 compose.override.yml

@@ -55,9 +55,9 @@ npm run check:pins
 
 That updates `.env.example`, the README matrix, and the CHANGELOG pin sentence together. See [docs/DESIGN.md](docs/DESIGN.md).
 
-### Hosted demo reset secrets
+### Hosted demo reset config
 
-The optional [demo-reset](.github/workflows/demo-reset.yml) workflow calls the public API. Maintainers set repository Actions secrets `DEMO_API_BASE_URL` and `DEMO_RESET_TOKEN` (same token as on the VM). Forks without those secrets skip the job. See [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
+The optional [demo-reset](.github/workflows/demo-reset.yml) workflow calls the public API. You do **not** need the reset secret for CI or forks: the job is skipped while variable `DEMO_API_BASE_URL` is `disabled` or not an https origin (the script no-ops if the token secret is still missing). Stage values with `npm run env:init:secrets` (gitignored `.secrets` from [`.secrets.example`](.secrets.example)), then when the API is live set repository **variable** `DEMO_API_BASE_URL` to the https origin and **secret** `DEMO_RESET_TOKEN` (same token as on the VM). See [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
 
 ### Rules
 

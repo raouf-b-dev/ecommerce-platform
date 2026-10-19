@@ -1,0 +1,3 @@
+# Known repository Variables referenced by workflows (see demo-reset.yml).
+config-variables:
+  - DEMO_API_BASE_URL

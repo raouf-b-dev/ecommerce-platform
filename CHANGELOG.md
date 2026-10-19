@@ -7,22 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Pins ecommerce-store-api 0.12.0, ecommerce-admin-dashboard 0.7.0 and ecommerce-store-web 0.6.0.
-
 ## [0.2.0] - 2026-10-19
+
+Hybrid hosted-demo support, demo-reset Action, and CI hardening. Pins ecommerce-store-api 0.12.0, ecommerce-admin-dashboard 0.7.0 and ecommerce-store-web 0.6.0.
 
 ### Added
 
 - `docs/HOSTED-DEMO.md` operator guide for the hybrid hosted demo: API + Postgres + Redis Stack on a VM behind Cloudflare Tunnel; admin on Cloudflare Pages; storefront on Vercel.
-- `overrides/compose.hosted-api.yaml` API-tier overlay (no admin/web on the VM; Postgres/Redis compose-internal; API on loopback for the tunnel).
-- `.github/workflows/demo-reset.yml` secrets-only scheduled / manual reset (`DEMO_API_BASE_URL` + `DEMO_RESET_TOKEN`); skips cleanly when secrets are unset.
-- README Live demo placeholders and hosted env placeholders in `.env.example`.
+- `overrides/compose.hosted-api.yaml` API-tier overlay (no admin/web on the VM; Postgres/Redis compose-internal).
+- API host publish bound to `127.0.0.1` in `compose.yaml` (local + Tunnel-friendly; not `0.0.0.0`).
+- `.github/workflows/demo-reset.yml` scheduled / manual reset via `scripts/gates/demo-reset.mjs`; job skipped (no runner) while variable `DEMO_API_BASE_URL` is `disabled` or not an https origin; script no-ops without `DEMO_RESET_TOKEN`.
+- `.github/actionlint.yaml` listing known repository Variables for actionlint.
+- CI `dependency-review` on pull requests (same idea as ecommerce-store-api; wired into `CI Status Check`).
+- `.secrets.example` plus `npm run env:init:secrets` to stage gitignored `.secrets` (generates `DEMO_RESET_TOKEN`) before uploading to GitHub.
+- README Live demo placeholders and hosted env placeholders in `.env.example` (`PUBLIC_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `AUTH_COOKIE_SAMESITE`, `DEMO_RESET_*`).
 
 ### Changed
 
 - `SECURITY.md` distinguishes local Compose (public demo passwords; do not expose laptop ports) from hosted (private infrastructure secrets; tunnel to API only).
 - Pin ecommerce-store-api to 0.12.0 (hosted reset + SameSite cookie support).
 - Platform version `0.2.0`.
+
+### Upgrade notes
+
+- Refresh pins: copy new `.env.example` keys if needed, then `npm run d:update` (or `docker compose pull` and `up -d --wait`).
+- Local full Compose is unchanged for contributors. Optional hosted API-tier: [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
+- Keep GitHub Actions variable `DEMO_API_BASE_URL=disabled` until the hosted API is live; then set it to the https origin and add secret `DEMO_RESET_TOKEN` (stage with `npm run env:init:secrets`).
 
 ## [0.1.0] - 2026-10-18
 

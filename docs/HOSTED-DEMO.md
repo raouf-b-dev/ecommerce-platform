@@ -67,7 +67,7 @@ The overlay:
 
 - Runs `postgres`, `redis`, `jwt-keygen`, `migrate`, `seed`, and `api`.
 - Leaves `admin` and `web` stopped (profile-gated).
-- Publishes the API on loopback only (`127.0.0.1`), for the tunnel.
+- Keeps the API on loopback only (`127.0.0.1` from `compose.yaml`), for the tunnel.
 - Does not publish Postgres or Redis on the host interface.
 - Leaves the `observability` profile off unless you opt in.
 
@@ -109,16 +109,29 @@ Workflow: [`.github/workflows/demo-reset.yml`](../.github/workflows/demo-reset.y
 - Triggers: every 6 hours UTC, plus `workflow_dispatch`.
 - Permissions: `contents: read` only.
 - Calls `POST /v1/admin/demo/reset` with header `X-Demo-Reset-Token`.
-- If either secret is missing, the job exits 0 with a notice (forks and clones without secrets stay green).
+- **Keep the demo reset idle until the API is live.** Repository variable `DEMO_API_BASE_URL` defaults to `disabled` so the job is skipped (no runner). The job only runs when that variable starts with `https://`. If the URL is live but `DEMO_RESET_TOKEN` is missing, the script exits 0 without calling the API. Forks stay idle and green.
+- CI unit-tests the skip / dry-run paths in `scripts/gates/demo-reset.mjs` so you do not need the reset secret for a green build.
 
-Repository secrets (Settings -> Secrets and variables -> Actions):
+Stage values locally (same pattern as the API repo), then copy into GitHub when ready. Never commit `.secrets`.
 
-| Secret | Example value |
-| :----- | :------------ |
-| `DEMO_API_BASE_URL` | `https://api.example.com` (no trailing path required) |
-| `DEMO_RESET_TOKEN` | Same token as on the VM (`DEMO_RESET_TOKEN`) |
+```sh
+npm run env:init:secrets
+# edit DEMO_API_BASE_URL in .secrets to your real https API origin
+# set GitHub Actions *variable* DEMO_API_BASE_URL to that https origin
+# set GitHub Actions *secret* DEMO_RESET_TOKEN
+# set the same DEMO_RESET_TOKEN on the VM .env
+```
 
-Do not put the token in workflow YAML or logs. GitHub masks secret values in logs; the workflow still avoids echoing them.
+Template: [`.secrets.example`](../.secrets.example). Generator: `npm run env:init:secrets` (use `-- --force` to rotate the token).
+
+GitHub Settings -> Secrets and variables -> Actions:
+
+| Name | Kind | Example value |
+| :--- | :--- | :------------ |
+| `DEMO_API_BASE_URL` | Repository variable | `disabled` until live, then `https://api.example.com` (real https origin; not a secret) |
+| `DEMO_RESET_TOKEN` | Repository secret | Same token as on the VM (`DEMO_RESET_TOKEN`) |
+
+Do not put the token in workflow YAML or logs. GitHub masks secret values in logs; the workflow still avoids echoing them. The shared script also refuses the `https://api.example.com` placeholder so a mistyped upload cannot hammer the example host.
 
 Reset restores labeled demo UI accounts and catalog baselines; it does not delete arbitrary shopper accounts or orders. See the API hosted-demo doc for behavior and limits.
 
