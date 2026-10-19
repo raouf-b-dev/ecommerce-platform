@@ -1,0 +1,37 @@
+# Scheduled demo data reset for the hybrid hosted API.
+# Secrets only: DEMO_API_BASE_URL + DEMO_RESET_TOKEN (repo Settings -> Actions).
+# Skips cleanly when secrets are unset so forks stay green.
+
+name: Demo reset
+
+on:
+  schedule:
+    # Every 6 hours UTC
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reset:
+    name: Reset demo data
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call demo reset endpoint
+        env:
+          DEMO_API_BASE_URL: ${{ secrets.DEMO_API_BASE_URL }}
+          DEMO_RESET_TOKEN: ${{ secrets.DEMO_RESET_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DEMO_API_BASE_URL}" ] || [ -z "${DEMO_RESET_TOKEN}" ]; then
+            echo "Skipping: DEMO_API_BASE_URL or DEMO_RESET_TOKEN is not configured."
+            exit 0
+          fi
+          base="${DEMO_API_BASE_URL%/}"
+          curl --fail --silent --show-error \
+            -X POST \
+            -H "X-Demo-Reset-Token: ${DEMO_RESET_TOKEN}" \
+            -H "Accept: application/json" \
+            "${base}/v1/admin/demo/reset"
+          echo "Demo reset request completed."

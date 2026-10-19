@@ -35,6 +35,7 @@ Do not paste green smoke or verify logs into the chat. Do not run `docker compos
 | Changing compose services or ports | [compose.yaml](compose.yaml), [.env.example](.env.example), README architecture |
 | Changing observability mounts | [config/observability/](config/observability/), `compose.yaml` configs |
 | Local Compose overlays | [overrides/](overrides/) (copy example to root `compose.override.yaml`) |
+| Hosted hybrid demo | [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md), [overrides/compose.hosted-api.yaml](overrides/compose.hosted-api.yaml), [SECURITY.md](SECURITY.md) |
 | Script / DX changes | [scripts/README.md](scripts/README.md) |
 | Bumping app versions | `.env.example`, README version matrix, `CHANGELOG.md`, then `npm run check:pins` |
 | Changing CI | [.github/workflows/ci.yml](.github/workflows/ci.yml) (ruleset requires only `CI Status Check`; keep parallel jobs in its `needs`) |

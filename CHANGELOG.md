@@ -7,7 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Tracks the path to 0.1.0. Pins ecommerce-store-api 0.11.3, ecommerce-admin-dashboard 0.7.0 and ecommerce-store-web 0.6.0.
+Pins ecommerce-store-api 0.12.0, ecommerce-admin-dashboard 0.7.0 and ecommerce-store-web 0.6.0.
+
+## [0.2.0] - 2026-10-19
+
+### Added
+
+- `docs/HOSTED-DEMO.md` operator guide for the hybrid hosted demo: API + Postgres + Redis Stack on a VM behind Cloudflare Tunnel; admin on Cloudflare Pages; storefront on Vercel.
+- `overrides/compose.hosted-api.yaml` API-tier overlay (no admin/web on the VM; Postgres/Redis compose-internal; API on loopback for the tunnel).
+- `.github/workflows/demo-reset.yml` secrets-only scheduled / manual reset (`DEMO_API_BASE_URL` + `DEMO_RESET_TOKEN`); skips cleanly when secrets are unset.
+- README Live demo placeholders and hosted env placeholders in `.env.example`.
+
+### Changed
+
+- `SECURITY.md` distinguishes local Compose (public demo passwords; do not expose laptop ports) from hosted (private infrastructure secrets; tunnel to API only).
+- Pin ecommerce-store-api to 0.12.0 (hosted reset + SameSite cookie support).
+- Platform version `0.2.0`.
+
+## [0.1.0] - 2026-10-18
+
+First tagged compose platform release. Pins ecommerce-store-api 0.11.3, ecommerce-admin-dashboard 0.7.0 and ecommerce-store-web 0.6.0.
 
 ### Added
 

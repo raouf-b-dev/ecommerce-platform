@@ -84,6 +84,9 @@ jobs:
       - name: Compose config (observability profile)
         run: docker compose --profile observability config --quiet
 
+      - name: Compose config (hosted API overlay)
+        run: docker compose -f compose.yaml -f overrides/compose.hosted-api.yaml config --quiet
+
   script-tests:
     name: Script Tests
     runs-on: ubuntu-latest

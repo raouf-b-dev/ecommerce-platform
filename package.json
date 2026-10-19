@@ -1,6 +1,6 @@
 {
   "name": "ecommerce-platform",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Docker Compose stack that runs the ecommerce API, admin dashboard, and storefront from published images.",
   "license": "MIT",
