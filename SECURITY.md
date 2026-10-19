@@ -27,7 +27,7 @@ For that path:
 
 - Infrastructure secrets (`POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `METRICS_API_KEY`, `DEMO_RESET_TOKEN`, tunnel token, JWT volume) are **distinct, private, and high-entropy**. They live on the VM and in GitHub Actions / Cloudflare configuration. They are never committed. Stage reset values in gitignored `.secrets` via `npm run env:init:secrets` (template: `.secrets.example`). The public API origin is a GitHub Actions *variable*; only `DEMO_RESET_TOKEN` is a repository secret. Keep `DEMO_API_BASE_URL=disabled` until the hosted API is live (no job runner until it is an https origin; the script skips without a token).
 - Only the API (and intentional API docs such as Swagger when enabled) should be reachable through the tunnel. Postgres and Redis stay on the Compose network and must not be published on `0.0.0.0`.
-- Labeled demo UI accounts in the README remain public credentials for click-through demos. A scheduled reset restores those accounts and catalog baselines; it is not a substitute for production hardening.
+- Labeled **hosted** demo UI accounts in the README (`viewer@` / `customer@`) are public credentials for click-through demos. Set `DEMO_READ_ONLY=true` so writable local operators are not seeded; the viewer role has `view_*` only (no `manage_*`). Optional private Super Admin via API `ADMIN_EMAIL` / `ADMIN_PASSWORD` stays off the README. A scheduled reset restores public demo accounts and catalog baselines; it is not a substitute for production hardening.
 
 ## Reporting a Vulnerability
 

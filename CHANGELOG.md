@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Hosted `DEMO_READ_ONLY` in `.env.example` and `overrides/compose.hosted-api.yaml`; HOSTED-DEMO / SECURITY / README split local writable credentials from hosted `viewer@` + `customer@` (RBAC view-only; private Super Admin via API `ADMIN_EMAIL` / `ADMIN_PASSWORD`, off the README).
+
 ## [0.2.0] - 2026-10-19
 
 Hybrid hosted-demo support, demo-reset Action, and CI hardening. Pins ecommerce-store-api 0.12.0, ecommerce-admin-dashboard 0.7.0 and ecommerce-store-web 0.6.0.
