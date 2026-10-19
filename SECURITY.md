@@ -1,6 +1,6 @@
 # Security Policy
 
-This repository runs the published images of the ecommerce apps for local evaluation. It contains no application code, so most vulnerabilities belong to one of the app repositories, each with its own policy:
+This repository wires published images of the ecommerce apps. It contains no application domain code, so most vulnerabilities belong in one of the app repositories, each with its own policy:
 
 | Component | Policy |
 | :-------- | :----- |
@@ -8,16 +8,26 @@ This repository runs the published images of the ecommerce apps for local evalua
 | Admin dashboard | [ecommerce-admin-dashboard SECURITY.md](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/blob/master/SECURITY.md) |
 | Storefront | [ecommerce-store-web SECURITY.md](https://github.com/raouf-b-dev/ecommerce-store-web/blob/master/SECURITY.md) |
 
-## Scope of this repository
+Issues specific to this repository (for example a compose setting that publishes a service it should not, a workflow that leaks secrets, or a committed credential) are in scope here.
 
-This stack is a local demo, not a production deployment:
+## Local Compose (laptop demo)
 
-- `.env.example` holds demo passwords and a demo metrics key. They are public by design.
-- The API runs with demo data, mock payments and Swagger enabled.
+The default `docker compose up` path is a **local evaluation demo**, not a production deployment:
+
+- `.env.example` holds demo passwords and a demo metrics key. They are public by design for a machine you control.
+- The API runs with demo data, mock payments, and Swagger enabled.
 - The JWT signing key is generated on first start and stored only in the `jwt_keys` Docker volume.
-- Do not expose these ports to the internet or reuse these values on a server.
+- **Do not expose laptop Compose ports to the internet**, and do not reuse these demo values on a host that is reachable from the public internet.
 
-Issues specific to this repository (for example a compose setting that publishes a service it should not, or a committed secret) are in scope here.
+## Hosted hybrid demo
+
+Operators may run an API-tier-only overlay on a VM with Cloudflare Tunnel, while admin and storefront run on Cloudflare Pages and Vercel. See [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
+
+For that path:
+
+- Infrastructure secrets (`POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `METRICS_API_KEY`, `DEMO_RESET_TOKEN`, tunnel token, JWT volume) are **distinct, private, and high-entropy**. They live on the VM and in GitHub Actions / Cloudflare configuration. They are never committed. Stage reset values in gitignored `.secrets` via `npm run env:init:secrets` (template: `.secrets.example`). The public API origin is a GitHub Actions *variable*; only `DEMO_RESET_TOKEN` is a repository secret. Keep `DEMO_API_BASE_URL=disabled` until the hosted API is live (no job runner until it is an https origin; the script skips without a token).
+- Only the API (and intentional API docs such as Swagger when enabled) should be reachable through the tunnel. Postgres and Redis stay on the Compose network and must not be published on `0.0.0.0`.
+- Labeled demo UI accounts in the README remain public credentials for click-through demos. A scheduled reset restores those accounts and catalog baselines; it is not a substitute for production hardening.
 
 ## Reporting a Vulnerability
 

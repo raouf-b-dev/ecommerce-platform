@@ -5,7 +5,19 @@
 
 One Compose file. Three published apps. A working ecommerce demo on your laptop.
 
-This repo is **configuration only** (a compose platform). The API, admin dashboard, and storefront ship as versioned GHCR images. Design notes: [docs/DESIGN.md](docs/DESIGN.md).
+This repo is **configuration only** (a compose platform). The API, admin dashboard, and storefront ship as versioned GHCR images. Design notes: [docs/DESIGN.md](docs/DESIGN.md). Hybrid hosted demo (optional): [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
+
+## Live demo
+
+Operator-filled placeholders after the first hybrid deploy (replace with real URLs):
+
+| What | URL |
+| :--- | :-- |
+| Storefront | https://shop.example.com |
+| Admin | https://admin.example.com |
+| API docs | https://api.example.com/api/docs |
+
+Local Compose below remains the primary contributor path. Hosted operators: [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
 
 ## Run the demo
 
@@ -119,7 +131,7 @@ Pins live in [`versions.json`](versions.json) and are mirrored into `.env.exampl
 
 | Component | Variable | Pinned | Image | Release |
 | :-------- | :------- | :----- | :---- | :------ |
-| API | `ECOM_API_VERSION` | 0.11.3 | [ecommerce-store-api](https://github.com/raouf-b-dev/ecommerce-store-api/pkgs/container/ecommerce-store-api) | [v0.11.3](https://github.com/raouf-b-dev/ecommerce-store-api/releases/tag/v0.11.3) |
+| API | `ECOM_API_VERSION` | 0.12.0 | [ecommerce-store-api](https://github.com/raouf-b-dev/ecommerce-store-api/pkgs/container/ecommerce-store-api) | [v0.12.0](https://github.com/raouf-b-dev/ecommerce-store-api/releases/tag/v0.12.0) |
 | Admin dashboard | `ECOM_ADMIN_VERSION` | 0.7.0 | [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/pkgs/container/ecommerce-admin-dashboard) | [v0.7.0](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/releases/tag/v0.7.0) |
 | Storefront | `ECOM_WEB_VERSION` | 0.6.0 | [ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web/pkgs/container/ecommerce-store-web) | [v0.6.0](https://github.com/raouf-b-dev/ecommerce-store-web/releases/tag/v0.6.0) |
 
@@ -130,6 +142,14 @@ To upgrade: bump the pin, then `npm run d:update`. Downgrade needs a data reset 
 Every variable is documented in [.env.example](.env.example). Missing keys fail loud in Compose.
 
 Personal overrides: copy [`overrides/compose.override.example.yaml`](overrides/compose.override.example.yaml) to root `compose.override.yaml` (gitignored). The sample remaps busy host ports; it does not require cloning the API.
+
+Hosted API-tier (VM only, no admin/web containers):
+
+```sh
+docker compose -f compose.yaml -f overrides/compose.hosted-api.yaml up -d --wait
+```
+
+Details: [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
 
 ## Troubleshooting
 
@@ -148,7 +168,8 @@ Personal overrides: copy [`overrides/compose.override.example.yaml`](overrides/c
 ## Known limitations
 
 - Seed image may still build once per machine until `ecommerce-store-api-seed` is published for the pinned tag.
-- No public staging URL or checkout GIF yet.
+- Live demo URLs in the README stay placeholders until an operator deploys and fills them in.
+- No checkout GIF yet.
 - This repo does not host application source or OpenAPI.
 
 ## Contributing

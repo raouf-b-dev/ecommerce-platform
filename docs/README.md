@@ -3,6 +3,7 @@
 | Path | What it is |
 | :--- | :--- |
 | [DESIGN.md](DESIGN.md) | Why the stack is shaped this way (pins, seed image, no husky, Dependabot on master, layout). |
+| [HOSTED-DEMO.md](HOSTED-DEMO.md) | Hybrid hosted demo: VM API-tier + Tunnel, Pages admin, Vercel storefront. |
 | `checkout.gif` | Not recorded yet. When added, link it from the README Quick start section. |
 
 ## Repository layout (compose platform)
@@ -11,8 +12,8 @@
 | :--- | :--- |
 | `compose.yaml`, `.env.example`, `versions.json` | Product: stack contract and pins |
 | `config/observability/` | Prometheus / Grafana files mounted by the observability profile |
-| `overrides/` | Example Compose overlays (copy to root `compose.override.yaml`) |
+| `overrides/` | Compose overlays (local `compose.override.yaml` sample; hosted API-tier file) |
 | `scripts/compose|dx|gates|pins|lib/` | Maintainer DX by job; see [scripts/README.md](../scripts/README.md) |
-| `.github/` | CI and Dependabot |
+| `.github/` | CI, Dependabot, and optional demo-reset workflow |
 
-Hosted staging is tracked in the README "Try without cloning" section. Tag `v0.1.0` on `master` after a release merge when the demo is ready to share.
+Local contributors use full Compose. Hosted operators follow [HOSTED-DEMO.md](HOSTED-DEMO.md). README Live demo placeholders are filled after the first deploy.
