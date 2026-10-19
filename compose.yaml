@@ -174,8 +174,10 @@ services:
       <<: *api-env
     volumes:
       - jwt_keys:/run/jwt:ro
+    # Loopback only: local browsers use localhost; hosted Tunnel targets 127.0.0.1.
+    # Avoids publishing the API on 0.0.0.0 (see docs/HOSTED-DEMO.md / SECURITY.md).
     ports:
-      - '${API_PORT:?set API_PORT in .env}:3000'
+      - '127.0.0.1:${API_PORT:?set API_PORT in .env}:3000'
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/health/readiness']
       interval: 5s

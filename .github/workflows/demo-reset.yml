@@ -1,0 +1,48 @@
+# Scheduled demo data reset for the hybrid hosted demo.
+# Default repository variable DEMO_API_BASE_URL=disabled skips the job (no runner).
+#
+# When ready (Settings -> Secrets and variables -> Actions):
+#   Variable DEMO_API_BASE_URL = https://api.your-domain.example  (must start with https://)
+#   Secret   DEMO_RESET_TOKEN  = same value as on the VM (.secrets / host .env)
+#
+# Stage locally first: npm run env:init:secrets (see .secrets.example).
+
+name: Demo reset
+
+on:
+  schedule:
+    # Every 6 hours UTC
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: demo-reset
+  cancel-in-progress: true
+
+jobs:
+  reset:
+    name: Reset demo data
+    # secrets is not available in job-level if (GitHub context rules). Gate on a
+    # real https origin so disabled/empty repos use no runner; the script skips
+    # if the token is missing or still a placeholder.
+    if: ${{ startsWith(vars.DEMO_API_BASE_URL, 'https://') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Call demo reset endpoint
+        env:
+          DEMO_API_BASE_URL: ${{ vars.DEMO_API_BASE_URL }}
+          DEMO_RESET_TOKEN: ${{ secrets.DEMO_RESET_TOKEN }}
+        run: node scripts/gates/demo-reset.mjs

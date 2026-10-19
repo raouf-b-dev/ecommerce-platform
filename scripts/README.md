@@ -4,7 +4,7 @@ Maintainer DX for this compose platform. npm scripts in `package.json` are the p
 
 | Folder | Job | Examples |
 | :--- | :--- | :--- |
-| `compose/` | Stack lifecycle helpers | `compose-cmd`, `ensure-env`, `compose-config` |
+| `compose/` | Stack lifecycle helpers | `compose-cmd`, `ensure-env`, `ensure-secrets`, `compose-config` |
 | `dx/` | First-comer and local UX | `setup`, `doctor`, `urls`, `pr` |
 | `gates/` | Pre-PR and CI checks | `verify`, `check-*`, `smoke`, `agent-*`, ascii lint |
 | `pins/` | Version pin maintenance | `bump`, `sync-pins` |
