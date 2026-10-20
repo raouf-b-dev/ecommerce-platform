@@ -41,7 +41,7 @@ cp .env.example .env
 On a public host, replace the laptop demo defaults before `up`:
 
 - Strong unique `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, and `METRICS_API_KEY` (do not reuse `.env.example` demo strings).
-- Hosted keys (see [.env.example](../.env.example)): `PUBLIC_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `AUTH_COOKIE_SAMESITE`, `DEMO_RESET_ENABLED`, `DEMO_RESET_TOKEN`.
+- Hosted keys (see [.env.example](../.env.example)): `PUBLIC_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `AUTH_COOKIE_SAMESITE`, `DEMO_RESET_ENABLED`, `DEMO_RESET_TOKEN`, `DEMO_READ_ONLY`, and `DEMO_VIEWER_*` / `DEMO_CUSTOMER_*` (defaults are fine for a public labeled demo).
 - Suggested hosted values (placeholders):
 
 ```env
@@ -50,6 +50,7 @@ CORS_ALLOWED_ORIGINS=https://admin.example.com,https://shop.example.com
 AUTH_COOKIE_SAMESITE=none
 DEMO_RESET_ENABLED=true
 DEMO_RESET_TOKEN=          # generate >= 32 chars on the host; never commit
+DEMO_READ_ONLY=true        # seeds viewer + silent fixture customer; mutations stay RBAC
 API_NODE_ENV=staging
 PAYMENT_MOCK_AUTO_COMPLETE=true
 ```
@@ -88,6 +89,8 @@ Browsers reach only the API (and intentional Swagger at `/api/docs` when enabled
 | `AUTH_COOKIE_SAMESITE` | `none` so Pages/Vercel can send the refresh cookie |
 | `DEMO_RESET_ENABLED` | `true` on the VM when you want scheduled reset |
 | `DEMO_RESET_TOKEN` | High-entropy secret, at least 32 characters |
+| `DEMO_READ_ONLY` | `true` on the public shared demo (viewer + silent fixture customer; no public writable local operators) |
+| `DEMO_VIEWER_*` / `DEMO_CUSTOMER_*` | Pass through to the API seed (defaults match API `.env.example`) |
 | `SWAGGER_ENABLED` | Still `true` in this Compose stack for the public demo docs |
 
 Match names exactly with the API image (see the API repo `.env.example` and `docs/infrastructure/HOSTED-DEMO.md`).
@@ -96,7 +99,7 @@ Match names exactly with the API image (see the API repo `.env.example` and `doc
 
 Until each app README has a dedicated hosted section, use this shape:
 
-**Admin (Cloudflare Pages)** - build the [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard) production bundle with the public API origin, for example `VITE_API_BASE_URL=https://api.example.com`. Deploy the static output to Pages on `https://admin.example.com`. That origin must appear in `CORS_ALLOWED_ORIGINS`.
+**Admin (Cloudflare Pages)** - build the [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard) production bundle with the public API origin, for example `VITE_API_BASE_URL=https://api.example.com` and `VITE_DEMO_MODE=true` (read-only banner). Deploy the static output to Pages on `https://admin.example.com`. That origin must appear in `CORS_ALLOWED_ORIGINS`.
 
 **Storefront (Vercel)** - build [ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web) with `NEXT_PUBLIC_API_BASE_URL=https://api.example.com` and `NEXT_PUBLIC_STOREFRONT_ORIGIN=https://shop.example.com` (plus any image-host allowlist the web README documents). Deploy to Vercel on `https://shop.example.com`. That origin must appear in `CORS_ALLOWED_ORIGINS`.
 
@@ -142,7 +145,7 @@ curl -fsS https://api.example.com/health/readiness
 # Open https://api.example.com/api/docs in a browser
 ```
 
-Then open `https://shop.example.com` and `https://admin.example.com`, sign in with the public demo accounts from the README, and run a mock checkout.
+Then open `https://admin.example.com` and sign in as the **hosted** README viewer (read-only). On `https://shop.example.com`, **register** with your own email and run a mock checkout. Do not use local writable operators (`superadmin@` / `admin@`).
 
 ## Cost expectations
 

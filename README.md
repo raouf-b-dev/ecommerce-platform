@@ -17,7 +17,17 @@ Operator-filled placeholders after the first hybrid deploy (replace with real UR
 | Admin | https://admin.example.com |
 | API docs | https://api.example.com/api/docs |
 
-Local Compose below remains the primary contributor path. Hosted operators: [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
+### Hosted / live demo sign-in (public, resets periodically)
+
+Requires API `DEMO_READ_ONLY=true` on the VM. Writable local operators (`superadmin@` / `admin@`) are **not** seeded on the shared host. The public admin account is `ADMIN_READONLY` (view only via RBAC). Defaults match API `.env.example` (`DEMO_VIEWER_*`).
+
+| Role | Email | Password | App |
+| :--- | :---- | :------- | :-- |
+| Admin (read-only) | `viewer@store.local` | `Viewer123!` | Admin |
+
+On the **storefront**, register with your own email and try cart/checkout. Do not use a shared customer password. Catalog baselines reset on a schedule. Private writable owner uses API `ADMIN_EMAIL` / `ADMIN_PASSWORD` (not published here). Full seed behavior: [ecommerce-store-api SEEDING.md](https://github.com/raouf-b-dev/ecommerce-store-api/blob/develop/docs/development/SEEDING.md). See [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
+
+Local Compose below remains the primary contributor path.
 
 ## Run the demo
 
@@ -54,13 +64,15 @@ First start pulls images (a few minutes). Later starts are about 30 seconds. If 
 
 Or: `npm run d:urls` / `npm run d:open` (ports come from `.env`).
 
+### Local demo sign-in (`DEMO_READ_ONLY=false`)
+
 | Role | Email | Password | App |
 | :--- | :---- | :------- | :-- |
 | Super admin | `superadmin@store.local` | `SuperAdmin123!` | Admin |
 | Admin | `admin@store.local` | `Admin123!` | Admin |
 | Customer | `customer@store.local` | `Customer123!` | Storefront |
 
-Demo accounts must set a new password at first sign-in. Every seed reset restores the passwords above. Checkout uses the API mock payment provider (no Stripe / card details).
+Local demo accounts must set a new password at first sign-in. Every local seed reset restores the passwords above. Checkout uses the API mock payment provider (no Stripe / card details).
 
 ## Everyday commands
 
