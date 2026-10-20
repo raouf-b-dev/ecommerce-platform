@@ -41,7 +41,7 @@ cp .env.example .env
 On a public host, replace the laptop demo defaults before `up`:
 
 - Strong unique `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, and `METRICS_API_KEY` (do not reuse `.env.example` demo strings).
-- Hosted keys (see [.env.example](../.env.example)): `PUBLIC_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `AUTH_COOKIE_SAMESITE`, `DEMO_RESET_ENABLED`, `DEMO_RESET_TOKEN`, `DEMO_READ_ONLY`.
+- Hosted keys (see [.env.example](../.env.example)): `PUBLIC_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `AUTH_COOKIE_SAMESITE`, `DEMO_RESET_ENABLED`, `DEMO_RESET_TOKEN`, `DEMO_READ_ONLY`, and `DEMO_VIEWER_*` / `DEMO_CUSTOMER_*` (defaults are fine for a public labeled demo).
 - Suggested hosted values (placeholders):
 
 ```env
@@ -50,7 +50,7 @@ CORS_ALLOWED_ORIGINS=https://admin.example.com,https://shop.example.com
 AUTH_COOKIE_SAMESITE=none
 DEMO_RESET_ENABLED=true
 DEMO_RESET_TOKEN=          # generate >= 32 chars on the host; never commit
-DEMO_READ_ONLY=true        # seeds viewer@ + customer@; mutations stay RBAC
+DEMO_READ_ONLY=true        # seeds viewer + silent fixture customer; mutations stay RBAC
 API_NODE_ENV=staging
 PAYMENT_MOCK_AUTO_COMPLETE=true
 ```
@@ -89,7 +89,8 @@ Browsers reach only the API (and intentional Swagger at `/api/docs` when enabled
 | `AUTH_COOKIE_SAMESITE` | `none` so Pages/Vercel can send the refresh cookie |
 | `DEMO_RESET_ENABLED` | `true` on the VM when you want scheduled reset |
 | `DEMO_RESET_TOKEN` | High-entropy secret, at least 32 characters |
-| `DEMO_READ_ONLY` | `true` on the public shared demo (viewer+customer seed; no public writable local operators) |
+| `DEMO_READ_ONLY` | `true` on the public shared demo (viewer + silent fixture customer; no public writable local operators) |
+| `DEMO_VIEWER_*` / `DEMO_CUSTOMER_*` | Pass through to the API seed (defaults match API `.env.example`) |
 | `SWAGGER_ENABLED` | Still `true` in this Compose stack for the public demo docs |
 
 Match names exactly with the API image (see the API repo `.env.example` and `docs/infrastructure/HOSTED-DEMO.md`).
@@ -144,7 +145,7 @@ curl -fsS https://api.example.com/health/readiness
 # Open https://api.example.com/api/docs in a browser
 ```
 
-Then open `https://shop.example.com` and `https://admin.example.com`. Sign in with the **hosted** README table (`viewer@store.local` / `customer@store.local`), not the local writable operators. Browse admin read-only; run a mock checkout on the storefront.
+Then open `https://admin.example.com` and sign in as the **hosted** README viewer (read-only). On `https://shop.example.com`, **register** with your own email and run a mock checkout. Do not use local writable operators (`superadmin@` / `admin@`).
 
 ## Cost expectations
 

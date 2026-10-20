@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Hosted `DEMO_READ_ONLY` in `.env.example` and `overrides/compose.hosted-api.yaml`; HOSTED-DEMO / SECURITY / README split local writable credentials from hosted `viewer@` + `customer@` (RBAC view-only; private Super Admin via API `ADMIN_EMAIL` / `ADMIN_PASSWORD`, off the README).
+- Hosted `DEMO_READ_ONLY` and `DEMO_*` seed account env pass-through in `.env.example` and `overrides/compose.hosted-api.yaml`; HOSTED-DEMO / SECURITY / README split local writable credentials from hosted viewer-only public admin (storefront: register; private Super Admin via API `ADMIN_EMAIL` / `ADMIN_PASSWORD`, off the README).
 
 ## [0.2.0] - 2026-10-19
 

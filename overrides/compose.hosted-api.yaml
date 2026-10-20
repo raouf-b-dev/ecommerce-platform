@@ -5,7 +5,8 @@
 #
 # Requires hosted keys in .env (see .env.example and docs/HOSTED-DEMO.md):
 #   PUBLIC_BASE_URL, CORS_ALLOWED_ORIGINS, AUTH_COOKIE_SAMESITE,
-#   DEMO_RESET_ENABLED, DEMO_RESET_TOKEN, DEMO_READ_ONLY
+#   DEMO_RESET_ENABLED, DEMO_RESET_TOKEN, DEMO_READ_ONLY,
+#   DEMO_VIEWER_* / DEMO_CUSTOMER_* (and optional DEMO_SUPERADMIN_* / DEMO_ADMIN_*)
 #
 # Postgres/Redis stay compose-internal (no host ports in compose.yaml).
 # API already binds 127.0.0.1 in compose.yaml for Cloudflare Tunnel.
@@ -18,6 +19,14 @@ x-hosted-api-env: &hosted-api-env
   DEMO_RESET_ENABLED: ${DEMO_RESET_ENABLED:?set DEMO_RESET_ENABLED in .env for hosted}
   DEMO_RESET_TOKEN: ${DEMO_RESET_TOKEN:-}
   DEMO_READ_ONLY: ${DEMO_READ_ONLY:?set DEMO_READ_ONLY in .env for hosted}
+  DEMO_SUPERADMIN_EMAIL: ${DEMO_SUPERADMIN_EMAIL:-superadmin@store.local}
+  DEMO_SUPERADMIN_PASSWORD: ${DEMO_SUPERADMIN_PASSWORD:-SuperAdmin123!}
+  DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:-admin@store.local}
+  DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-Admin123!}
+  DEMO_VIEWER_EMAIL: ${DEMO_VIEWER_EMAIL:-viewer@store.local}
+  DEMO_VIEWER_PASSWORD: ${DEMO_VIEWER_PASSWORD:-Viewer123!}
+  DEMO_CUSTOMER_EMAIL: ${DEMO_CUSTOMER_EMAIL:-customer@store.local}
+  DEMO_CUSTOMER_PASSWORD: ${DEMO_CUSTOMER_PASSWORD:-Customer123!}
 
 services:
   # Profile-gated so `up` without that profile omits the UI containers.
