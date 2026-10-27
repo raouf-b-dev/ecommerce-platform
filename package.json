@@ -7,7 +7,8 @@
   "author": "Abderaouf Bouzerara <https://github.com/raouf-b-dev>",
   "type": "module",
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=26.0.0",
+    "npm": ">=11.6.0"
   },
   "homepage": "https://github.com/raouf-b-dev/ecommerce-platform#readme",
   "repository": {
@@ -33,7 +34,7 @@
     "sync-pins": "node scripts/pins/sync-pins.mjs",
     "bump": "node scripts/pins/bump.mjs",
     "lint:ascii": "node scripts/gates/lint-ascii-prose.cjs",
-    "test:scripts": "node --test scripts/lib/env-file.spec.mjs scripts/lib/oneshot.spec.mjs scripts/lib/versions.spec.mjs scripts/gates/agent-check.spec.mjs scripts/gates/demo-reset.spec.mjs scripts/compose/ensure-secrets.spec.mjs",
+    "test:scripts": "node --test scripts/lib/env-file.spec.mjs scripts/lib/oneshot.spec.mjs scripts/lib/versions.spec.mjs scripts/gates/agent-check.spec.mjs scripts/gates/demo-reset.spec.mjs scripts/gates/node-lts-watch.spec.mjs scripts/compose/ensure-secrets.spec.mjs",
     "d:up": "node scripts/compose/compose-cmd.mjs up -d --wait",
     "d:up:obs": "node scripts/compose/compose-cmd.mjs --profile observability up -d --wait",
     "d:down": "node scripts/compose/compose-cmd.mjs --all-profiles down",

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Keep versions.json, .env.example, README matrix, and CHANGELOG pins in sync.
+ * Keep versions.json, .env.example, README matrix, and CHANGELOG pins in sync,
+ * and package.json engines.node in step with the .nvmrc Node major.
  *
  * Source of truth: versions.json
  * Apply with: npm run sync-pins   or   npm run bump -- <app> <x.y.z>
@@ -105,11 +106,25 @@ function readReadmeReleaseLinks() {
   return out;
 }
 
+function checkNodePin() {
+  const nvmrc = fs.readFileSync(path.join(root, '.nvmrc'), 'utf8').trim();
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+  const engine = pkg.engines?.node ?? '';
+  const match = engine.match(/^>=(\d+)\.0\.0$/);
+  if (!/^\d+$/.test(nvmrc)) return `.nvmrc must be a bare Node major, got "${nvmrc}"`;
+  if (!match || match[1] !== nvmrc) {
+    return `node: .nvmrc=${nvmrc} package.json engines.node="${engine}" (want ">=${nvmrc}.0.0")`;
+  }
+  return null;
+}
+
 const env = readEnvExample();
 const readme = readReadmePins();
 const readmeReleases = readReadmeReleaseLinks();
 const changelog = readChangelogPins();
 const errors = [];
+const nodeError = checkNodePin();
+if (nodeError) errors.push(nodeError);
 
 for (const app of APPS) {
   const want = versions[app];
@@ -127,11 +142,11 @@ for (const app of APPS) {
 
 if (errors.length > 0) {
   process.stderr.write(
-    `check-pins: mismatch\n${errors.join('\n')}\nfix: edit versions.json then npm run sync-pins\n`,
+    `check-pins: mismatch\n${errors.join('\n')}\nfix: edit versions.json then npm run sync-pins (Node: align .nvmrc and engines.node)\n`,
   );
   process.exit(1);
 }
 
 process.stdout.write(
-  `check-pins: ok api=${versions.api} admin=${versions.admin} web=${versions.web}\n`,
+  `check-pins: ok node=${fs.readFileSync(path.join(root, ".nvmrc"), "utf8").trim()} api=${versions.api} admin=${versions.admin} web=${versions.web}\n`,
 );

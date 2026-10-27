@@ -40,7 +40,7 @@ cp .env.example .env
 docker compose up -d --wait
 ```
 
-With Node 24+ (creates `.env`, prints URLs, then starts the stack):
+With Node.js LTS (see `.nvmrc`, currently 26) (creates `.env`, prints URLs, then starts the stack):
 
 ```sh
 git clone https://github.com/raouf-b-dev/ecommerce-platform.git
