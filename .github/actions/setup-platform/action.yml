@@ -8,8 +8,9 @@ runs:
       uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
         node-version-file: .nvmrc
-        # No cache: npm here. setup-node runs `npm config get cache` with the
+        # No npm cache: setup-node would run `npm config get cache` with the
         # bundled npm, which devEngines rejects until the pinned npm is installed.
+        package-manager-cache: false
 
     - name: Install pinned npm (package.json devEngines.packageManager)
       shell: bash

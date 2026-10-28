@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Node 24 -> Node 26: `setup-platform` and `demo-reset.yml` use `node-version-file: .nvmrc` (with `cache: npm`); `engines` is `node >=26.0.0`, `npm >=11.6.0`; `npm run check:pins` also checks `.nvmrc` against `engines.node`.
-- `setup-platform` and `demo-reset.yml` drop `cache: npm` (setup-node queries the cache with the bundled npm 11, which devEngines rejects).
+- `setup-platform` and `demo-reset.yml` drop `cache: npm`, and all three `setup-node` steps (including `node-lts-watch.yml`) set `package-manager-cache: false`: setup-node otherwise auto-enables the npm cache from `devEngines.packageManager` and queries it with the bundled npm 11, which devEngines rejects.
 
 ## [0.2.0] - 2026-10-19
 
