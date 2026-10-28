@@ -16,7 +16,7 @@
 | `scripts/compose|dx|gates|pins|lib/` | Maintainer DX by job; see [scripts/README.md](../scripts/README.md) |
 | `.github/` | CI, Dependabot, and optional demo-reset workflow |
 
-Local contributors use full Compose. Hosted operators follow [HOSTED-DEMO.md](HOSTED-DEMO.md). README Live demo placeholders are filled after the first deploy.
+Local contributors use full Compose. Hosted operators follow [HOSTED-DEMO.md](HOSTED-DEMO.md). There is no public hosted demo yet; the README says coming soon until one is deployed.
 
 ## Node.js version policy
 
