@@ -16,9 +16,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Pull requests that touch the stack or observability config (including
-  # Dependabot bumps of postgres, prometheus or grafana) also run the
-  # observability smoke; other pull requests skip it.
+  # Pull requests that touch compose.yaml, config/observability/, this
+  # workflow or .github/actions/setup-platform/ (including Dependabot bumps
+  # of postgres, prometheus or grafana) also run the observability smoke;
+  # other pull requests skip it.
   changes:
     name: Detect Changes
     runs-on: ubuntu-latest
@@ -37,8 +38,11 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        # The diff runs on its own line so a git error fails this job (and so
+        # CI Status Check) instead of silently skipping the smoke.
         run: |
-          if git diff --name-only "$BASE_SHA...$HEAD_SHA" | grep -Eq '^(compose\.yaml|config/observability/)'; then
+          changed="$(git diff --name-only "$BASE_SHA...$HEAD_SHA")"
+          if printf '%s\n' "$changed" | grep -Eq '^(compose\.yaml|config/observability/|\.github/workflows/ci\.yml|\.github/actions/setup-platform/)'; then
             echo "observability=true" >> "$GITHUB_OUTPUT"
           else
             echo "observability=false" >> "$GITHUB_OUTPUT"

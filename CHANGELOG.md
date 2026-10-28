@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Node 24 -> Node 26: `setup-platform` and `demo-reset.yml` use `node-version-file: .nvmrc`; `engines` is `node >=26.0.0`, `npm >=11.6.0`; `npm run check:pins` also checks `.nvmrc` against `engines.node`.
 - `setup-platform` and `demo-reset.yml` drop `cache: npm`, and all three `setup-node` steps (including `node-lts-watch.yml`) set `package-manager-cache: false`: setup-node otherwise auto-enables the npm cache from `devEngines.packageManager` and queries it with the bundled npm 11, which devEngines rejects. CI therefore runs `npm ci` with no npm cache.
-- CI `Observability Smoke` also runs on pull requests that touch `compose.yaml` or `config/observability/` (new `Detect Changes` job), so Dependabot bumps of postgres, prometheus and grafana are smoke-tested; `CI Status Check` now needs both jobs and requires the smoke only when it was due to run (skipped is OK otherwise).
+- CI `Observability Smoke` also runs on pull requests that touch `compose.yaml`, `config/observability/`, `.github/workflows/ci.yml` or `.github/actions/setup-platform/` (new `Detect Changes` job, which fails if its `git diff` fails), so Dependabot bumps of postgres, prometheus and grafana are smoke-tested; `CI Status Check` now needs both jobs and requires the smoke only when it was due to run (skipped is OK otherwise).
 - `npm run check:pins` Node pin check moved to `checkNodePins` in `scripts/lib/versions.mjs` with unit tests for the `.nvmrc` / `engines.node` / `devEngines.runtime` mismatch paths; a missing `engines.node` is now reported as missing.
 
 ### Fixed
