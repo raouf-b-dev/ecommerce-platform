@@ -9,7 +9,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { APPS, checkNodeRuntimePin, envKey, findNpmPinDrift, readNpmPin, readVersions } from '../lib/versions.mjs';
+import { APPS, envKey, findNpmPinDrift, readNodeRuntimePin, readNpmPin, readVersions } from '../lib/versions.mjs';
 import { REPO_ROOT } from '../lib/repo-root.mjs';
 
 const root = REPO_ROOT;
@@ -116,7 +116,12 @@ function checkNodePin() {
   if (!match || match[1] !== nvmrc) {
     return `node: .nvmrc=${nvmrc} package.json engines.node="${engine}" (want ">=${nvmrc}.0.0")`;
   }
-  return checkNodeRuntimePin(pkg);
+  const runtime = readNodeRuntimePin(pkg);
+  if (runtime.error) return runtime.error;
+  if (runtime.version !== engine) {
+    return `node: devEngines.runtime.version="${runtime.version}" engines.node="${engine}" (want equal, ">=${nvmrc}.0.0")`;
+  }
+  return null;
 }
 
 function npmPinFiles() {

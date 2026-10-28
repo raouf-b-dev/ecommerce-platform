@@ -64,6 +64,22 @@ export function readNpmPin(pkg) {
 }
 
 /**
+ * Read the Node guard from package.json devEngines.runtime. npm 12 does not
+ * enforce root engines.node (even with engine-strict), so this is the guard.
+ * Returns { version } or { error }.
+ */
+export function readNodeRuntimePin(pkg) {
+  const rt = pkg?.devEngines?.runtime;
+  if (!rt || rt.name !== 'node' || typeof rt.version !== 'string' || rt.version === '') {
+    return { error: 'node: package.json devEngines.runtime must be { name: "node", version: ">=N.0.0" }' };
+  }
+  if (rt.onFail !== 'error') {
+    return { error: `node: devEngines.runtime.onFail="${rt.onFail}" (want "error")` };
+  }
+  return { version: rt.version };
+}
+
+/**
  * Find npm versions hard-coded in workflow or doc text that drift from the pin.
  * Matches `npm@x.y.z` and `npm x.y.z` (word boundary, case-sensitive).
  * @param {string} pinned
@@ -83,19 +99,3 @@ export function findNpmPinDrift(pinned, files) {
   return errors;
 }
 
-/**
- * Check devEngines.runtime against engines.node. npm 12 does not enforce root
- * engines.node (even with engine-strict), so devEngines.runtime is the guard.
- * @returns {string|null} error
- */
-export function checkNodeRuntimePin(pkg) {
-  const rt = pkg?.devEngines?.runtime;
-  const engine = pkg?.engines?.node ?? '';
-  if (!rt || rt.name !== 'node' || rt.onFail !== 'error') {
-    return 'node: package.json devEngines.runtime must be { name: "node", version: <engines.node>, onFail: "error" }';
-  }
-  if (rt.version !== engine) {
-    return `node: devEngines.runtime.version="${rt.version}" engines.node="${engine}" (want equal)`;
-  }
-  return null;
-}

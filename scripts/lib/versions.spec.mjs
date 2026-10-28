@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { checkNodeRuntimePin, findNpmPinDrift, readNpmPin, readVersions, writeVersions } from './versions.mjs';
+import { findNpmPinDrift, readNodeRuntimePin, readNpmPin, readVersions, writeVersions } from './versions.mjs';
 
 test('readVersions rejects bad semver', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ecom-versions-'));
@@ -36,11 +36,10 @@ test('findNpmPinDrift flags hard-coded npm versions that differ from the pin', (
   ]);
 });
 
-test('checkNodeRuntimePin requires devEngines.runtime to mirror engines.node', () => {
+test('readNodeRuntimePin reads devEngines.runtime', () => {
   const rt = { name: 'node', version: '>=26.0.0', onFail: 'error' };
-  const pkg = (runtime) => ({ engines: { node: '>=26.0.0' }, devEngines: { runtime } });
-  assert.equal(checkNodeRuntimePin(pkg(rt)), null);
-  assert.match(checkNodeRuntimePin(pkg(undefined)), /devEngines\.runtime must be/);
-  assert.match(checkNodeRuntimePin(pkg({ ...rt, onFail: 'warn' })), /devEngines\.runtime must be/);
-  assert.match(checkNodeRuntimePin(pkg({ ...rt, version: '>=24.0.0' })), /want equal/);
+  assert.deepEqual(readNodeRuntimePin({ devEngines: { runtime: rt } }), { version: '>=26.0.0' });
+  assert.match(readNodeRuntimePin({}).error, /devEngines\.runtime must be/);
+  assert.match(readNodeRuntimePin({ devEngines: { runtime: { ...rt, name: 'bun' } } }).error, /devEngines\.runtime must be/);
+  assert.match(readNodeRuntimePin({ devEngines: { runtime: { ...rt, onFail: 'warn' } } }).error, /onFail/);
 });
