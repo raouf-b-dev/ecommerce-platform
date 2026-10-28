@@ -36,6 +36,7 @@ jobs:
           node-version-file: .nvmrc
 
       - name: Check .nvmrc against the Node release schedule
+        id: check
         env:
           NODE_LTS_REPORT: ${{ runner.temp }}/node-lts-report.md
         run: node scripts/gates/node-lts-watch.mjs
@@ -46,9 +47,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           REPORT: ${{ runner.temp }}/node-lts-report.md
+          CHECK_OUTCOME: ${{ steps.check.outcome }}
         run: |
           if [ ! -s "$REPORT" ]; then
             echo 'No findings.'
+            if [ "$CHECK_OUTCOME" = success ]; then
+              number="$(gh issue list --label node-lts --state open --limit 1 --json number --jq '.[0].number // empty')"
+              if [ -n "$number" ]; then
+                gh issue close "$number" --comment 'Node LTS watch: no findings.'
+              fi
+            fi
             exit 0
           fi
           gh label create node-lts --color 5FA04E --description 'Node.js LTS watchdog' --force

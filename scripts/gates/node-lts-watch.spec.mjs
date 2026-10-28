@@ -33,6 +33,16 @@ test('Maintenance LTS while a newer LTS is Active warns', () => {
   assert.match(warnings[0], /Node 24 is in Maintenance LTS; Node 26 is Active LTS/);
 });
 
+test('a major that is not an LTS line yet warns', () => {
+  const current = evaluate({ schedule, majors: all('27'), today: at('2026-10-28') });
+  assert.deepEqual(current.failures, []);
+  assert.equal(current.warnings.length, 4);
+  for (const w of current.warnings) assert.match(w, /not an LTS line yet/);
+  const early = evaluate({ schedule, majors: all('26'), today: at('2026-06-01') });
+  assert.deepEqual(early.failures, []);
+  assert.match(early.warnings[0], /Node 26 is not an LTS line yet \(Current\); pin the Active LTS \(Node 24\)/);
+});
+
 test('end of life within 90 days warns, past end of life fails', () => {
   const soon = evaluate({ schedule, majors: all('22'), today: at('2027-03-01') });
   assert.match(soon.warnings[0], /end of life on 2027-04-30 \(60 days\)/);

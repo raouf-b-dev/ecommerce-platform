@@ -81,7 +81,11 @@ export function evaluate({ schedule, majors, today }) {
       continue;
     }
     if (daysLeft <= EOL_WARN_DAYS) {
-      warnings.push(`${repo}: Node ${major} reaches end of life on ${iso(d.end)} (${daysLeft} days)`);
+      warnings.push(`${repo}: Node ${major} reaches end of life on ${iso(d.end)} (${daysLeft} ${daysLeft === 1 ? 'day' : 'days'})`);
+    }
+    if (!d.lts || d.lts > today) {
+      const hint = newestActive !== null ? ` (Node ${newestActive})` : '';
+      warnings.push(`${repo}: Node ${major} is not an LTS line yet (Current); pin the Active LTS${hint}`);
     }
     if (d.maintenance && d.maintenance <= today && newestActive > Number(major)) {
       warnings.push(`${repo}: Node ${major} is in Maintenance LTS; Node ${newestActive} is Active LTS`);
