@@ -34,6 +34,8 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
+          # Bundled npm fails devEngines; this job only runs node.
+          package-manager-cache: false
 
       - name: Check .nvmrc against the Node release schedule
         id: check

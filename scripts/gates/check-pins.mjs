@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 /**
  * Keep versions.json, .env.example, README matrix, and CHANGELOG pins in sync,
- * and package.json engines.node in step with the .nvmrc Node major.
+ * package.json engines.node and devEngines.runtime in step with the .nvmrc Node major, and any npm
+ * version hard-coded in workflows or docs in step with devEngines.packageManager.
  *
  * Source of truth: versions.json
  * Apply with: npm run sync-pins   or   npm run bump -- <app> <x.y.z>
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { APPS, envKey, readVersions } from '../lib/versions.mjs';
+import { APPS, envKey, findNpmPinDrift, readNodeRuntimePin, readNpmPin, readVersions } from '../lib/versions.mjs';
 import { REPO_ROOT } from '../lib/repo-root.mjs';
 
 const root = REPO_ROOT;
@@ -115,7 +116,36 @@ function checkNodePin() {
   if (!match || match[1] !== nvmrc) {
     return `node: .nvmrc=${nvmrc} package.json engines.node="${engine}" (want ">=${nvmrc}.0.0")`;
   }
+  const runtime = readNodeRuntimePin(pkg);
+  if (runtime.error) return runtime.error;
+  if (runtime.version !== engine) {
+    return `node: devEngines.runtime.version="${runtime.version}" engines.node="${engine}" (want equal, ">=${nvmrc}.0.0")`;
+  }
   return null;
+}
+
+function npmPinFiles() {
+  const files = {};
+  const add = (rel) => {
+    const abs = path.join(root, rel);
+    if (fs.existsSync(abs)) files[rel] = fs.readFileSync(abs, 'utf8');
+  };
+  for (const dir of ['.github/workflows', '.github/actions/setup-platform']) {
+    const abs = path.join(root, dir);
+    if (!fs.existsSync(abs)) continue;
+    for (const name of fs.readdirSync(abs).sort()) {
+      if (/\.ya?ml$/.test(name)) add(`${dir}/${name}`);
+    }
+  }
+  for (const rel of ['README.md', 'docs/README.md', 'CONTRIBUTING.md']) add(rel);
+  return files;
+}
+
+function checkNpmPin() {
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+  const pin = readNpmPin(pkg);
+  if (pin.error) return { errors: [pin.error] };
+  return { version: pin.version, errors: findNpmPinDrift(pin.version, npmPinFiles()) };
 }
 
 const env = readEnvExample();
@@ -125,6 +155,8 @@ const changelog = readChangelogPins();
 const errors = [];
 const nodeError = checkNodePin();
 if (nodeError) errors.push(nodeError);
+const npmPin = checkNpmPin();
+errors.push(...npmPin.errors);
 
 for (const app of APPS) {
   const want = versions[app];
@@ -142,11 +174,11 @@ for (const app of APPS) {
 
 if (errors.length > 0) {
   process.stderr.write(
-    `check-pins: mismatch\n${errors.join('\n')}\nfix: edit versions.json then npm run sync-pins (Node: align .nvmrc and engines.node)\n`,
+    `check-pins: mismatch\n${errors.join('\n')}\nfix: edit versions.json then npm run sync-pins (Node: align .nvmrc, engines.node and devEngines.runtime; npm: devEngines.packageManager.version is the only npm pin)\n`,
   );
   process.exit(1);
 }
 
 process.stdout.write(
-  `check-pins: ok node=${fs.readFileSync(path.join(root, ".nvmrc"), "utf8").trim()} api=${versions.api} admin=${versions.admin} web=${versions.web}\n`,
+  `check-pins: ok node=${fs.readFileSync(path.join(root, ".nvmrc"), "utf8").trim()} npm=${npmPin.version} api=${versions.api} admin=${versions.admin} web=${versions.web}\n`,
 );

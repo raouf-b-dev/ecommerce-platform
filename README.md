@@ -40,7 +40,7 @@ cp .env.example .env
 docker compose up -d --wait
 ```
 
-With Node.js LTS (see `.nvmrc`, currently 26) (creates `.env`, prints URLs, then starts the stack):
+With Node.js LTS (see `.nvmrc`, currently 26) and npm 12.2.1 (pinned in `package.json` `devEngines`; no Node release bundles it yet, so run `npm install --global npm@12.2.1` once; see [docs/README.md](docs/README.md#nodejs-version-policy)) (creates `.env`, prints URLs, then starts the stack):
 
 ```sh
 git clone https://github.com/raouf-b-dev/ecommerce-platform.git
