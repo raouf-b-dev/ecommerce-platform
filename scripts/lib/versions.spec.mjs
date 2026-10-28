@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { findNpmPinDrift, readNpmPin, readVersions, writeVersions } from './versions.mjs';
+import { checkNodeRuntimePin, findNpmPinDrift, readNpmPin, readVersions, writeVersions } from './versions.mjs';
 
 test('readVersions rejects bad semver', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ecom-versions-'));
@@ -34,4 +34,13 @@ test('findNpmPinDrift flags hard-coded npm versions that differ from the pin', (
   assert.deepEqual(findNpmPinDrift('12.2.1', files), [
     'npm: drift.yml pins npm 12.1.0 (devEngines.packageManager.version=12.2.1)',
   ]);
+});
+
+test('checkNodeRuntimePin requires devEngines.runtime to mirror engines.node', () => {
+  const rt = { name: 'node', version: '>=26.0.0', onFail: 'error' };
+  const pkg = (runtime) => ({ engines: { node: '>=26.0.0' }, devEngines: { runtime } });
+  assert.equal(checkNodeRuntimePin(pkg(rt)), null);
+  assert.match(checkNodeRuntimePin(pkg(undefined)), /devEngines\.runtime must be/);
+  assert.match(checkNodeRuntimePin(pkg({ ...rt, onFail: 'warn' })), /devEngines\.runtime must be/);
+  assert.match(checkNodeRuntimePin(pkg({ ...rt, version: '>=24.0.0' })), /want equal/);
 });

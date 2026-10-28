@@ -82,3 +82,20 @@ export function findNpmPinDrift(pinned, files) {
   }
   return errors;
 }
+
+/**
+ * Check devEngines.runtime against engines.node. npm 12 does not enforce root
+ * engines.node (even with engine-strict), so devEngines.runtime is the guard.
+ * @returns {string|null} error
+ */
+export function checkNodeRuntimePin(pkg) {
+  const rt = pkg?.devEngines?.runtime;
+  const engine = pkg?.engines?.node ?? '';
+  if (!rt || rt.name !== 'node' || rt.onFail !== 'error') {
+    return 'node: package.json devEngines.runtime must be { name: "node", version: <engines.node>, onFail: "error" }';
+  }
+  if (rt.version !== engine) {
+    return `node: devEngines.runtime.version="${rt.version}" engines.node="${engine}" (want equal)`;
+  }
+  return null;
+}

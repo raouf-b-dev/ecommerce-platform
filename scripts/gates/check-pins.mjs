@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Keep versions.json, .env.example, README matrix, and CHANGELOG pins in sync,
- * package.json engines.node in step with the .nvmrc Node major, and any npm
+ * package.json engines.node and devEngines.runtime in step with the .nvmrc Node major, and any npm
  * version hard-coded in workflows or docs in step with devEngines.packageManager.
  *
  * Source of truth: versions.json
@@ -9,7 +9,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { APPS, envKey, findNpmPinDrift, readNpmPin, readVersions } from '../lib/versions.mjs';
+import { APPS, checkNodeRuntimePin, envKey, findNpmPinDrift, readNpmPin, readVersions } from '../lib/versions.mjs';
 import { REPO_ROOT } from '../lib/repo-root.mjs';
 
 const root = REPO_ROOT;
@@ -116,7 +116,7 @@ function checkNodePin() {
   if (!match || match[1] !== nvmrc) {
     return `node: .nvmrc=${nvmrc} package.json engines.node="${engine}" (want ">=${nvmrc}.0.0")`;
   }
-  return null;
+  return checkNodeRuntimePin(pkg);
 }
 
 function npmPinFiles() {
@@ -169,7 +169,7 @@ for (const app of APPS) {
 
 if (errors.length > 0) {
   process.stderr.write(
-    `check-pins: mismatch\n${errors.join('\n')}\nfix: edit versions.json then npm run sync-pins (Node: align .nvmrc and engines.node; npm: devEngines.packageManager.version is the only npm pin)\n`,
+    `check-pins: mismatch\n${errors.join('\n')}\nfix: edit versions.json then npm run sync-pins (Node: align .nvmrc, engines.node and devEngines.runtime; npm: devEngines.packageManager.version is the only npm pin)\n`,
   );
   process.exit(1);
 }
