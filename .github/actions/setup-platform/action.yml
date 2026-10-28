@@ -1,5 +1,5 @@
 name: Setup platform
-description: Node from .nvmrc, npm ci, and .env from .env.example (checkout must already exist)
+description: Node from .nvmrc, npm from devEngines, npm ci, and .env from .env.example (checkout must already exist)
 
 runs:
   using: composite
@@ -8,7 +8,15 @@ runs:
       uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
         node-version-file: .nvmrc
-        cache: npm
+        # No cache: npm here. setup-node runs `npm config get cache` with the
+        # bundled npm, which devEngines rejects until the pinned npm is installed.
+
+    - name: Install pinned npm (package.json devEngines.packageManager)
+      shell: bash
+      run: |
+        version="$(node --print "require('./package.json').devEngines.packageManager.version")"
+        npm install --global "npm@${version}"
+        npm --version
 
     - name: Install npm dependencies
       shell: bash

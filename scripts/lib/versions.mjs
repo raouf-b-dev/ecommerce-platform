@@ -47,3 +47,38 @@ export function writeVersions(root, versions) {
 export function envKey(app) {
   return ENV_KEYS[app];
 }
+
+/**
+ * Read the pinned npm version from package.json devEngines.packageManager.
+ * Returns { version } or { error }.
+ */
+export function readNpmPin(pkg) {
+  const pm = pkg?.devEngines?.packageManager;
+  if (!pm || pm.name !== 'npm' || !SEMVER.test(String(pm.version || ''))) {
+    return { error: 'npm: package.json devEngines.packageManager must be { name: "npm", version: "x.y.z" }' };
+  }
+  if (pm.onFail !== 'error') {
+    return { error: `npm: devEngines.packageManager.onFail="${pm.onFail}" (want "error")` };
+  }
+  return { version: pm.version };
+}
+
+/**
+ * Find npm versions hard-coded in workflow or doc text that drift from the pin.
+ * Matches `npm@x.y.z` and `npm x.y.z` (word boundary, case-sensitive).
+ * @param {string} pinned
+ * @param {Record<string, string>} files name -> text
+ * @returns {string[]} errors
+ */
+export function findNpmPinDrift(pinned, files) {
+  const errors = [];
+  const re = /\bnpm(?:@| )(\d+\.\d+\.\d+)\b/g;
+  for (const [name, text] of Object.entries(files)) {
+    for (const match of text.matchAll(re)) {
+      if (match[1] !== pinned) {
+        errors.push(`npm: ${name} pins npm ${match[1]} (devEngines.packageManager.version=${pinned})`);
+      }
+    }
+  }
+  return errors;
+}

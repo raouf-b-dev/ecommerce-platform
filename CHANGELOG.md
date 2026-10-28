@@ -11,11 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `.nvmrc` (Node 26, Active LTS) as the single source of truth for the Node major, plus `.npmrc` with `engine-strict=true`.
 - Weekly `.github/workflows/node-lts-watch.yml` (`scripts/gates/node-lts-watch.mjs`): fails on an end-of-life `.nvmrc` major in any of the four repos and opens or updates one `node-lts` issue for Maintenance LTS, end of life within 90 days, or drift. Policy in `docs/README.md`.
+- npm 12.2.1 pinned in `package.json` `devEngines.packageManager` (`onFail: error`); `setup-platform` installs it after `actions/setup-node`; `npm run check:pins` fails if a workflow or doc hard-codes a different npm version.
 - Hosted `DEMO_READ_ONLY` and `DEMO_*` seed account env pass-through in `.env.example` and `overrides/compose.hosted-api.yaml`; HOSTED-DEMO / SECURITY / README split local writable credentials from hosted viewer-only public admin (storefront: register; private Super Admin via API `ADMIN_EMAIL` / `ADMIN_PASSWORD`, off the README).
 
 ### Changed
 
 - Node 24 -> Node 26: `setup-platform` and `demo-reset.yml` use `node-version-file: .nvmrc` (with `cache: npm`); `engines` is `node >=26.0.0`, `npm >=11.6.0`; `npm run check:pins` also checks `.nvmrc` against `engines.node`.
+- `setup-platform` and `demo-reset.yml` drop `cache: npm` (setup-node queries the cache with the bundled npm 11, which devEngines rejects).
 
 ## [0.2.0] - 2026-10-19
 
