@@ -80,6 +80,29 @@ export function readNodeRuntimePin(pkg) {
 }
 
 /**
+ * Check the Node pins agree: .nvmrc is a bare major N, engines.node is
+ * ">=N.0.0", and devEngines.runtime.version equals engines.node.
+ * @param {string} nvmrc trimmed .nvmrc contents
+ * @param {object} pkg parsed package.json
+ * @returns {string | null} error, or null when in sync
+ */
+export function checkNodePins(nvmrc, pkg) {
+  if (!/^\d+$/.test(nvmrc)) return `.nvmrc must be a bare Node major, got "${nvmrc}"`;
+  const engine = pkg.engines?.node;
+  if (typeof engine !== 'string') return `node: package.json engines.node is missing (want ">=${nvmrc}.0.0")`;
+  const match = engine.match(/^>=(\d+)\.0\.0$/);
+  if (!match || match[1] !== nvmrc) {
+    return `node: .nvmrc=${nvmrc} package.json engines.node="${engine}" (want ">=${nvmrc}.0.0")`;
+  }
+  const runtime = readNodeRuntimePin(pkg);
+  if (runtime.error) return runtime.error;
+  if (runtime.version !== engine) {
+    return `node: devEngines.runtime.version="${runtime.version}" engines.node="${engine}" (want equal, ">=${nvmrc}.0.0")`;
+  }
+  return null;
+}
+
+/**
  * Find npm versions hard-coded in workflow or doc text that drift from the pin.
  * Matches `npm@x.y.z` and `npm x.y.z` (word boundary, case-sensitive).
  * @param {string} pinned
@@ -98,4 +121,3 @@ export function findNpmPinDrift(pinned, files) {
   }
   return errors;
 }
-

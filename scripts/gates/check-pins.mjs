@@ -9,7 +9,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { APPS, envKey, findNpmPinDrift, readNodeRuntimePin, readNpmPin, readVersions } from '../lib/versions.mjs';
+import { APPS, checkNodePins, envKey, findNpmPinDrift, readNpmPin, readVersions } from '../lib/versions.mjs';
 import { REPO_ROOT } from '../lib/repo-root.mjs';
 
 const root = REPO_ROOT;
@@ -110,18 +110,7 @@ function readReadmeReleaseLinks() {
 function checkNodePin() {
   const nvmrc = fs.readFileSync(path.join(root, '.nvmrc'), 'utf8').trim();
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-  const engine = pkg.engines?.node ?? '';
-  const match = engine.match(/^>=(\d+)\.0\.0$/);
-  if (!/^\d+$/.test(nvmrc)) return `.nvmrc must be a bare Node major, got "${nvmrc}"`;
-  if (!match || match[1] !== nvmrc) {
-    return `node: .nvmrc=${nvmrc} package.json engines.node="${engine}" (want ">=${nvmrc}.0.0")`;
-  }
-  const runtime = readNodeRuntimePin(pkg);
-  if (runtime.error) return runtime.error;
-  if (runtime.version !== engine) {
-    return `node: devEngines.runtime.version="${runtime.version}" engines.node="${engine}" (want equal, ">=${nvmrc}.0.0")`;
-  }
-  return null;
+  return checkNodePins(nvmrc, pkg);
 }
 
 function npmPinFiles() {

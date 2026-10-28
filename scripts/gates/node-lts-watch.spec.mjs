@@ -50,6 +50,16 @@ test('end of life within 90 days warns, past end of life fails', () => {
   assert.equal(past.failures.length, 4);
 });
 
+test('end of life boundary: the end date itself fails, the day before warns', () => {
+  const dayBefore = evaluate({ schedule, majors: all('22'), today: at('2027-04-29') });
+  assert.deepEqual(dayBefore.failures, []);
+  assert.match(dayBefore.warnings[0], /end of life on 2027-04-30 \(1 day\)$/);
+  const onDay = evaluate({ schedule, majors: all('22'), today: at('2027-04-30') });
+  assert.equal(onDay.failures.length, 4);
+  assert.match(onDay.failures[0], /Node 22 reached end of life on 2027-04-30$/);
+  assert.ok(onDay.warnings.every((w) => !/\(0 days\)/.test(w)));
+});
+
 test('drift, missing .nvmrc and unknown majors are reported', () => {
   const { failures, warnings } = evaluate({
     schedule,
