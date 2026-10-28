@@ -1,0 +1,68 @@
+# Weekly Node.js LTS watchdog for ecommerce-platform and the three app repos.
+# Fails when a repo's .nvmrc major is past end of life; opens or updates one
+# `node-lts` issue for Maintenance LTS, end of life within 90 days, or drift.
+# Logic and tests: scripts/gates/node-lts-watch.mjs (no dependencies).
+
+name: Node LTS watch
+
+on:
+  schedule:
+    # Mondays 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: node-lts-watch
+  cancel-in-progress: true
+
+jobs:
+  watch:
+    name: Check Node LTS status
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Check .nvmrc against the Node release schedule
+        id: check
+        env:
+          NODE_LTS_REPORT: ${{ runner.temp }}/node-lts-report.md
+        run: node scripts/gates/node-lts-watch.mjs
+
+      - name: Open or update the node-lts issue
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REPORT: ${{ runner.temp }}/node-lts-report.md
+          CHECK_OUTCOME: ${{ steps.check.outcome }}
+        run: |
+          if [ ! -s "$REPORT" ]; then
+            echo 'No findings.'
+            if [ "$CHECK_OUTCOME" = success ]; then
+              number="$(gh issue list --label node-lts --state open --limit 1 --json number --jq '.[0].number // empty')"
+              if [ -n "$number" ]; then
+                gh issue close "$number" --comment 'Node LTS watch: no findings.'
+              fi
+            fi
+            exit 0
+          fi
+          gh label create node-lts --color 5FA04E --description 'Node.js LTS watchdog' --force
+          number="$(gh issue list --label node-lts --state open --limit 1 --json number --jq '.[0].number // empty')"
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --body-file "$REPORT"
+          else
+            gh issue create --title 'Node.js LTS: action needed' --label node-lts --body-file "$REPORT"
+          fi
