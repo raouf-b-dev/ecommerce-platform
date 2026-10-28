@@ -16,6 +16,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Pull requests that touch the stack or observability config (including
+  # Dependabot bumps of postgres, prometheus or grafana) also run the
+  # observability smoke; other pull requests skip it.
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    outputs:
+      observability: ${{ steps.filter.outputs.observability }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Filter changed paths
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if git diff --name-only "$BASE_SHA...$HEAD_SHA" | grep -Eq '^(compose\.yaml|config/observability/)'; then
+            echo "observability=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "observability=false" >> "$GITHUB_OUTPUT"
+          fi
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -150,7 +178,7 @@ jobs:
   ci:
     name: CI Status Check
     runs-on: ubuntu-latest
-    needs: [lint, pins, compose, script-tests, dependency-review, smoke]
+    needs: [changes, lint, pins, compose, script-tests, dependency-review, smoke, observability-smoke]
     if: always()
     steps:
       - name: Check all jobs status
@@ -160,16 +188,13 @@ jobs:
           PINS_STATUS: ${{ needs.pins.result }}
           COMPOSE_STATUS: ${{ needs.compose.result }}
           SCRIPT_TESTS_STATUS: ${{ needs.script-tests.result }}
+          CHANGES_STATUS: ${{ needs.changes.result }}
+          OBSERVABILITY_CHANGED: ${{ needs.changes.outputs.observability }}
           DEPENDENCY_REVIEW_STATUS: ${{ needs.dependency-review.result }}
           SMOKE_STATUS: ${{ needs.smoke.result }}
+          OBSERVABILITY_SMOKE_STATUS: ${{ needs.observability-smoke.result }}
         run: |
           echo "event: $EVENT_NAME"
-          echo "lint: $LINT_STATUS"
-          echo "pins: $PINS_STATUS"
-          echo "compose: $COMPOSE_STATUS"
-          echo "script-tests: $SCRIPT_TESTS_STATUS"
-          echo "dependency-review: $DEPENDENCY_REVIEW_STATUS"
-          echo "smoke: $SMOKE_STATUS"
           failed=false
           check() {
             local name="$1" status="$2" require_success="$3"
@@ -183,16 +208,25 @@ jobs:
             fi
           }
           # dependency-review only runs on pull_request; skipped elsewhere is OK.
+          # changes runs on every pull_request; skipped elsewhere is OK.
           dep_required=false
           if [ "$EVENT_NAME" = "pull_request" ]; then
             dep_required=true
           fi
+          # observability-smoke runs on workflow_dispatch and on pull requests
+          # that touch compose.yaml or config/observability/; skipped otherwise.
+          obs_required=false
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] || [ "$OBSERVABILITY_CHANGED" = "true" ]; then
+            obs_required=true
+          fi
+          check changes "$CHANGES_STATUS" "$dep_required"
           check lint "$LINT_STATUS" true
           check pins "$PINS_STATUS" true
           check compose "$COMPOSE_STATUS" true
           check script-tests "$SCRIPT_TESTS_STATUS" true
           check dependency-review "$DEPENDENCY_REVIEW_STATUS" "$dep_required"
           check smoke "$SMOKE_STATUS" true
+          check observability-smoke "$OBSERVABILITY_SMOKE_STATUS" "$obs_required"
           if [ "$failed" = true ]; then
             echo "One or more required jobs did not pass."
             exit 1
@@ -203,7 +237,11 @@ jobs:
     name: Observability Smoke
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    if: github.event_name == 'workflow_dispatch'
+    needs: [changes]
+    # always() so the skipped changes job (push, dispatch) does not skip this one.
+    if: >-
+      ${{ always() && (github.event_name == 'workflow_dispatch' ||
+      needs.changes.outputs.observability == 'true') }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { findNpmPinDrift, readNodeRuntimePin, readNpmPin, readVersions, writeVersions } from './versions.mjs';
+import { checkNodePins, findNpmPinDrift, readNodeRuntimePin, readNpmPin, readVersions, writeVersions } from './versions.mjs';
 
 test('readVersions rejects bad semver', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ecom-versions-'));
@@ -42,4 +42,31 @@ test('readNodeRuntimePin reads devEngines.runtime', () => {
   assert.match(readNodeRuntimePin({}).error, /devEngines\.runtime must be/);
   assert.match(readNodeRuntimePin({ devEngines: { runtime: { ...rt, name: 'bun' } } }).error, /devEngines\.runtime must be/);
   assert.match(readNodeRuntimePin({ devEngines: { runtime: { ...rt, onFail: 'warn' } } }).error, /onFail/);
+});
+
+test('checkNodePins accepts .nvmrc, engines.node and devEngines.runtime in step', () => {
+  const pkg = {
+    engines: { node: '>=26.0.0' },
+    devEngines: { runtime: { name: 'node', version: '>=26.0.0', onFail: 'error' } },
+  };
+  assert.equal(checkNodePins('26', pkg), null);
+});
+
+test('checkNodePins reports .nvmrc, engines.node and devEngines.runtime mismatches', () => {
+  const runtime = { name: 'node', version: '>=26.0.0', onFail: 'error' };
+  const pkg = (node, version) => ({ engines: { node }, devEngines: { runtime: { ...runtime, version } } });
+  assert.equal(checkNodePins('v26', pkg('>=26.0.0', '>=26.0.0')), '.nvmrc must be a bare Node major, got "v26"');
+  assert.equal(
+    checkNodePins('26', pkg('>=24.0.0', '>=26.0.0')),
+    'node: .nvmrc=26 package.json engines.node=">=24.0.0" (want ">=26.0.0")',
+  );
+  assert.equal(
+    checkNodePins('26', { devEngines: { runtime } }),
+    'node: package.json engines.node is missing (want ">=26.0.0")',
+  );
+  assert.equal(
+    checkNodePins('26', pkg('>=26.0.0', '>=24.0.0')),
+    'node: devEngines.runtime.version=">=24.0.0" engines.node=">=26.0.0" (want equal, ">=26.0.0")',
+  );
+  assert.match(checkNodePins('26', { engines: { node: '>=26.0.0' } }), /devEngines\.runtime must be/);
 });

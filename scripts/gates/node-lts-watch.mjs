@@ -76,7 +76,8 @@ export function evaluate({ schedule, majors, today }) {
       continue;
     }
     const daysLeft = Math.floor((d.end - today) / DAY_MS);
-    if (daysLeft < 0) {
+    // The end date is the first day without support: reaching it today is end of life.
+    if (daysLeft <= 0) {
       failures.push(`${repo}: Node ${major} reached end of life on ${iso(d.end)}`);
       continue;
     }
