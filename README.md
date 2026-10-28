@@ -5,29 +5,11 @@
 
 One Compose file. Three published apps. A working ecommerce demo on your laptop.
 
-This repo is **configuration only** (a compose platform). The API, admin dashboard, and storefront ship as versioned GHCR images. Design notes: [docs/DESIGN.md](docs/DESIGN.md). Hybrid hosted demo (optional): [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
+This repo is **configuration only** (a compose platform). The API, admin dashboard, and storefront ship as versioned GHCR images. Design notes: [docs/DESIGN.md](docs/DESIGN.md). Hosted demo operator guide (not deployed yet): [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
 
-## Live demo
+## Hosted demo
 
-Operator-filled placeholders after the first hybrid deploy (replace with real URLs):
-
-| What | URL |
-| :--- | :-- |
-| Storefront | https://shop.example.com |
-| Admin | https://admin.example.com |
-| API docs | https://api.example.com/api/docs |
-
-### Hosted / live demo sign-in (public, resets periodically)
-
-Requires API `DEMO_READ_ONLY=true` on the VM. Writable local operators (`superadmin@` / `admin@`) are **not** seeded on the shared host. The public admin account is `ADMIN_READONLY` (view only via RBAC). Defaults match API `.env.example` (`DEMO_VIEWER_*`).
-
-| Role | Email | Password | App |
-| :--- | :---- | :------- | :-- |
-| Admin (read-only) | `viewer@store.local` | `Viewer123!` | Admin |
-
-On the **storefront**, register with your own email and try cart/checkout. Do not use a shared customer password. Catalog baselines reset on a schedule. Private writable owner uses API `ADMIN_EMAIL` / `ADMIN_PASSWORD` (not published here). Full seed behavior: [ecommerce-store-api SEEDING.md](https://github.com/raouf-b-dev/ecommerce-store-api/blob/develop/docs/development/SEEDING.md). See [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
-
-Local Compose below remains the primary contributor path.
+Hosted demo: coming soon. Until then, run everything locally with `docker compose up` (see [Run the demo](#run-the-demo)); local sign-in accounts are under [Local demo sign-in](#local-demo-sign-in-demo_read_onlyfalse).
 
 ## Run the demo
 
@@ -180,7 +162,7 @@ Details: [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
 ## Known limitations
 
 - Seed image may still build once per machine until `ecommerce-store-api-seed` is published for the pinned tag.
-- Live demo URLs in the README stay placeholders until an operator deploys and fills them in.
+- No hosted demo yet (coming soon); run the stack locally.
 - No checkout GIF yet.
 - This repo does not host application source or OpenAPI.
 

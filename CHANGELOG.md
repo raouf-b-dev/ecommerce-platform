@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `node-lts-watch`: a Node major whose end-of-life date is today now fails as end of life instead of warning "(0 days)".
 
+### Documentation
+
+- README: replace the placeholder Live demo URLs and hosted sign-in with "Hosted demo: coming soon" and point to the local `docker compose up` path; docs no longer imply a hosted demo is live.
+
 ## [0.2.0] - 2026-10-19
 
 Hybrid hosted-demo support, demo-reset Action, and CI hardening. Pins ecommerce-store-api 0.12.0, ecommerce-admin-dashboard 0.7.0 and ecommerce-store-web 0.6.0.

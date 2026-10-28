@@ -2,7 +2,7 @@
 
 Operator guide for a free-tier hybrid demo: the API tier runs on a small VM behind Cloudflare Tunnel; the admin dashboard and storefront are separate static/SSR hosts. Local full Compose (`docker compose up`) stays the contributor path and is unchanged.
 
-Placeholder origins in this doc are examples only. Replace them with your real hosts after the first deploy. Never commit real tokens or passwords.
+No public hosted demo is deployed yet; this guide is for when one is. Placeholder origins in this doc are examples only. Replace them with your real hosts after the first deploy. Never commit real tokens or passwords.
 
 ## Architecture
 
@@ -145,7 +145,7 @@ curl -fsS https://api.example.com/health/readiness
 # Open https://api.example.com/api/docs in a browser
 ```
 
-Then open `https://admin.example.com` and sign in as the **hosted** README viewer (read-only). On `https://shop.example.com`, **register** with your own email and run a mock checkout. Do not use local writable operators (`superadmin@` / `admin@`).
+Then open `https://admin.example.com` and sign in as the read-only viewer (`DEMO_VIEWER_EMAIL` / `DEMO_VIEWER_PASSWORD` from the API env). On `https://shop.example.com`, **register** with your own email and run a mock checkout. Do not use local writable operators (`superadmin@` / `admin@`).
 
 ## Cost expectations
 
