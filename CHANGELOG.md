@@ -17,7 +17,7 @@ Node 26 / npm 12 toolchain, the API read-only hosted-demo model, and pin refresh
 - Weekly `.github/workflows/node-lts-watch.yml` (`scripts/gates/node-lts-watch.mjs`): fails on an end-of-life `.nvmrc` major in any of the four repos and opens or updates one `node-lts` issue for Maintenance LTS, end of life within 90 days, or drift. Policy in `docs/README.md`.
 - `package.json` `devEngines.runtime` (`node >=26.0.0`, `onFail: error`): npm 12 ignores root `engines.node` even with `engine-strict`, so this restores the Node guard; `npm run check:pins` keeps it equal to `engines.node`.
 - npm 12.2.1 pinned in `package.json` `devEngines.packageManager` (`onFail: error`); `setup-platform` installs it after `actions/setup-node`; `npm run check:pins` fails if a workflow or doc hard-codes a different npm version.
-- Hosted `DEMO_READ_ONLY` and `DEMO_*` seed account env pass-through in `.env.example` and `overrides/compose.hosted-api.yaml`; HOSTED-DEMO / SECURITY / README split local writable credentials from hosted viewer-only public admin (storefront: register; private Super Admin via API `ADMIN_EMAIL` / `ADMIN_PASSWORD`, off the README).
+- Hosted `DEMO_READ_ONLY` and `DEMO_VIEWER_*` pass-through in `.env.example` and `overrides/compose.hosted-api.yaml`; HOSTED-DEMO / SECURITY / README split local writable credentials from hosted viewer-only public admin (storefront: register; private Super Admin via API `ADMIN_EMAIL` / `ADMIN_PASSWORD`, off the README).
 
 ### Changed
 
@@ -41,7 +41,7 @@ Node 26 / npm 12 toolchain, the API read-only hosted-demo model, and pin refresh
 
 - From 0.2.0 (API 0.12.0): copy the new `.env.example` hosted keys if needed (the `DEMO_SUPERADMIN_*`, `DEMO_ADMIN_*` and `DEMO_CUSTOMER_*` lines can be removed from `.env`), then `npm run d:update` (or `docker compose pull` and `up -d --wait`). The `migrate` service applies the API 0.13.0 migrations (including the products category foreign-key rename and the `change_own_credentials` grant to existing custom roles).
 - API 0.13.0 uses bullmq 6. A fresh install, or any local stack reset with `npm run d:reset`, can skip this. An existing deployment whose persistent Redis still holds bullmq 5 repeatable jobs must stop the old API, run the legacy-repeatables cleanup from the API bullmq 5 release, and only then start 0.13.0 (see the API [0.13.0 CHANGELOG](https://github.com/raouf-b-dev/ecommerce-store-api/blob/master/CHANGELOG.md) and `docs/infrastructure/REDIS.md` in the API repo).
-- Custom API roles created after the upgrade must be granted `change_own_credentials` (password change, logout-all) and, if they need customer contact data, `view_customer_pii`.
+- Migration 1787400000012 grants `change_own_credentials` to existing custom API roles; custom roles created after the upgrade must be granted `change_own_credentials` to keep change-password and logout-all. No migration grants `view_customer_pii`: every custom role, existing or new, must be granted `view_customer_pii` to see customer name, email and shipping address and to filter by them.
 
 ## [0.2.0] - 2026-10-19
 
