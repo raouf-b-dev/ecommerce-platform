@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-29
+
+Node 26 / npm 12 toolchain, the API read-only hosted-demo model, and pin refresh. Pins ecommerce-store-api 0.13.0, ecommerce-admin-dashboard 0.8.0 and ecommerce-store-web 0.7.0.
+
 ### Added
 
 - `.nvmrc` (Node 26, Active LTS) as the single source of truth for the Node major, plus `.npmrc` with `engine-strict=true`.
@@ -17,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Pin ecommerce-store-api 0.13.0 (API and `ecommerce-store-api-seed` images), ecommerce-admin-dashboard 0.8.0 and ecommerce-store-web 0.7.0 (`versions.json`, `.env.example`, README version matrix).
+- Platform version `0.3.0`.
+- Hosted demo model follows API 0.13.0: with `DEMO_READ_ONLY=true` the read-only viewer (`ADMIN_READONLY`) is the only seeded account (no writable operators, no demo customer, cart, orders, or payments); visitors register on the storefront. `DEMO_VIEWER_*` is the only public hosted-demo login and the only `DEMO_*` account `overrides/compose.hosted-api.yaml` passes through; `DEMO_SUPERADMIN_*`, `DEMO_ADMIN_*` and `DEMO_CUSTOMER_*` are for local seeding only and were removed from `.env.example` and the overlay (local Compose uses the API image defaults in the README). HOSTED-DEMO, SECURITY and README describe the viewer limits (no password change or logout-all, masked customer contact data) and that the API logs no customer personal data, credentials, or tokens.
 - Node 24 -> Node 26: `setup-platform` and `demo-reset.yml` use `node-version-file: .nvmrc`; `engines` is `node >=26.0.0`, `npm >=11.6.0`; `npm run check:pins` also checks `.nvmrc` against `engines.node`.
 - `setup-platform` and `demo-reset.yml` drop `cache: npm`, and all three `setup-node` steps (including `node-lts-watch.yml`) set `package-manager-cache: false`: setup-node otherwise auto-enables the npm cache from `devEngines.packageManager` and queries it with the bundled npm 11, which devEngines rejects. CI therefore runs `npm ci` with no npm cache.
 - CI `Observability Smoke` also runs on pull requests that touch `compose.yaml`, `config/observability/`, `.github/workflows/ci.yml` or `.github/actions/setup-platform/` (new `Detect Changes` job, which fails if its `git diff` fails), so Dependabot bumps of postgres, prometheus and grafana are smoke-tested; `CI Status Check` now needs both jobs and requires the smoke only when it was due to run (skipped is OK otherwise).
@@ -29,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
 - README: replace the placeholder Live demo URLs and hosted sign-in with "Hosted demo: coming soon" and point to the local `docker compose up` path; docs no longer imply a hosted demo is live.
+
+### Upgrade notes
+
+- From 0.2.0 (API 0.12.0): copy the new `.env.example` hosted keys if needed (the `DEMO_SUPERADMIN_*`, `DEMO_ADMIN_*` and `DEMO_CUSTOMER_*` lines can be removed from `.env`), then `npm run d:update` (or `docker compose pull` and `up -d --wait`). The `migrate` service applies the API 0.13.0 migrations (including the products category foreign-key rename and the `change_own_credentials` grant to existing custom roles).
+- API 0.13.0 uses bullmq 6. A fresh install, or any local stack reset with `npm run d:reset`, can skip this. An existing deployment whose persistent Redis still holds bullmq 5 repeatable jobs must stop the old API, run the legacy-repeatables cleanup from the API bullmq 5 release, and only then start 0.13.0 (see the API [0.13.0 CHANGELOG](https://github.com/raouf-b-dev/ecommerce-store-api/blob/master/CHANGELOG.md) and `docs/infrastructure/REDIS.md` in the API repo).
+- Custom API roles created after the upgrade must be granted `change_own_credentials` (password change, logout-all) and, if they need customer contact data, `view_customer_pii`.
 
 ## [0.2.0] - 2026-10-19
 
