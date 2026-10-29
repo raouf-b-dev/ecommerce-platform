@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { readVersions, writeVersions } from './versions.mjs';
+import { checkNodePins, findNpmPinDrift, readNodeRuntimePin, readNpmPin, readVersions, writeVersions } from './versions.mjs';
 
 test('readVersions rejects bad semver', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ecom-versions-'));
@@ -15,4 +15,58 @@ test('writeVersions round-trips', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ecom-versions-'));
   writeVersions(dir, { api: '1.2.3', admin: '4.5.6', web: '7.8.9' });
   assert.deepEqual(readVersions(dir), { api: '1.2.3', admin: '4.5.6', web: '7.8.9' });
+});
+
+test('readNpmPin reads devEngines.packageManager', () => {
+  const pm = { name: 'npm', version: '12.2.1', onFail: 'error' };
+  assert.deepEqual(readNpmPin({ devEngines: { packageManager: pm } }), { version: '12.2.1' });
+  assert.match(readNpmPin({}).error, /devEngines\.packageManager/);
+  assert.match(readNpmPin({ devEngines: { packageManager: { ...pm, version: '^12' } } }).error, /x\.y\.z/);
+  assert.match(readNpmPin({ devEngines: { packageManager: { ...pm, onFail: 'warn' } } }).error, /onFail/);
+});
+
+test('findNpmPinDrift flags hard-coded npm versions that differ from the pin', () => {
+  const files = {
+    'ok.yml': 'run: npm install --global "npm@$version"\n',
+    'same.md': 'Uses npm 12.2.1 via devEngines.',
+    'drift.yml': 'run: npm install --global npm@12.1.0\n',
+  };
+  assert.deepEqual(findNpmPinDrift('12.2.1', files), [
+    'npm: drift.yml pins npm 12.1.0 (devEngines.packageManager.version=12.2.1)',
+  ]);
+});
+
+test('readNodeRuntimePin reads devEngines.runtime', () => {
+  const rt = { name: 'node', version: '>=26.0.0', onFail: 'error' };
+  assert.deepEqual(readNodeRuntimePin({ devEngines: { runtime: rt } }), { version: '>=26.0.0' });
+  assert.match(readNodeRuntimePin({}).error, /devEngines\.runtime must be/);
+  assert.match(readNodeRuntimePin({ devEngines: { runtime: { ...rt, name: 'bun' } } }).error, /devEngines\.runtime must be/);
+  assert.match(readNodeRuntimePin({ devEngines: { runtime: { ...rt, onFail: 'warn' } } }).error, /onFail/);
+});
+
+test('checkNodePins accepts .nvmrc, engines.node and devEngines.runtime in step', () => {
+  const pkg = {
+    engines: { node: '>=26.0.0' },
+    devEngines: { runtime: { name: 'node', version: '>=26.0.0', onFail: 'error' } },
+  };
+  assert.equal(checkNodePins('26', pkg), null);
+});
+
+test('checkNodePins reports .nvmrc, engines.node and devEngines.runtime mismatches', () => {
+  const runtime = { name: 'node', version: '>=26.0.0', onFail: 'error' };
+  const pkg = (node, version) => ({ engines: { node }, devEngines: { runtime: { ...runtime, version } } });
+  assert.equal(checkNodePins('v26', pkg('>=26.0.0', '>=26.0.0')), '.nvmrc must be a bare Node major, got "v26"');
+  assert.equal(
+    checkNodePins('26', pkg('>=24.0.0', '>=26.0.0')),
+    'node: .nvmrc=26 package.json engines.node=">=24.0.0" (want ">=26.0.0")',
+  );
+  assert.equal(
+    checkNodePins('26', { devEngines: { runtime } }),
+    'node: package.json engines.node is missing (want ">=26.0.0")',
+  );
+  assert.equal(
+    checkNodePins('26', pkg('>=26.0.0', '>=24.0.0')),
+    'node: devEngines.runtime.version=">=24.0.0" engines.node=">=26.0.0" (want equal, ">=26.0.0")',
+  );
+  assert.match(checkNodePins('26', { engines: { node: '>=26.0.0' } }), /devEngines\.runtime must be/);
 });

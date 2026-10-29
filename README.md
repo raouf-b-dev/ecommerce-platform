@@ -5,19 +5,11 @@
 
 One Compose file. Three published apps. A working ecommerce demo on your laptop.
 
-This repo is **configuration only** (a compose platform). The API, admin dashboard, and storefront ship as versioned GHCR images. Design notes: [docs/DESIGN.md](docs/DESIGN.md). Hybrid hosted demo (optional): [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
+This repo is **configuration only** (a compose platform). The API, admin dashboard, and storefront ship as versioned GHCR images. Design notes: [docs/DESIGN.md](docs/DESIGN.md). Hosted demo operator guide (not deployed yet): [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
 
-## Live demo
+## Hosted demo
 
-Operator-filled placeholders after the first hybrid deploy (replace with real URLs):
-
-| What | URL |
-| :--- | :-- |
-| Storefront | https://shop.example.com |
-| Admin | https://admin.example.com |
-| API docs | https://api.example.com/api/docs |
-
-Local Compose below remains the primary contributor path. Hosted operators: [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
+Hosted demo: coming soon. Until then, run everything locally with `docker compose up` (see [Run the demo](#run-the-demo)); local sign-in accounts are under [Local demo sign-in](#local-demo-sign-in-demo_read_onlyfalse).
 
 ## Run the demo
 
@@ -30,7 +22,7 @@ cp .env.example .env
 docker compose up -d --wait
 ```
 
-With Node 24+ (creates `.env`, prints URLs, then starts the stack):
+With Node.js LTS (see `.nvmrc`, currently 26) and npm 12.2.1 (pinned in `package.json` `devEngines`; no Node release bundles it yet, so run `npm install --global npm@12.2.1` once; see [docs/README.md](docs/README.md#nodejs-version-policy)) (creates `.env`, prints URLs, then starts the stack):
 
 ```sh
 git clone https://github.com/raouf-b-dev/ecommerce-platform.git
@@ -54,13 +46,17 @@ First start pulls images (a few minutes). Later starts are about 30 seconds. If 
 
 Or: `npm run d:urls` / `npm run d:open` (ports come from `.env`).
 
+### Local demo sign-in (`DEMO_READ_ONLY=false`)
+
 | Role | Email | Password | App |
 | :--- | :---- | :------- | :-- |
 | Super admin | `superadmin@store.local` | `SuperAdmin123!` | Admin |
 | Admin | `admin@store.local` | `Admin123!` | Admin |
 | Customer | `customer@store.local` | `Customer123!` | Storefront |
 
-Demo accounts must set a new password at first sign-in. Every seed reset restores the passwords above. Checkout uses the API mock payment provider (no Stripe / card details).
+These accounts are for local Compose only. The hosted demo (coming soon) seeds just a read-only admin viewer (`DEMO_READ_ONLY=true`, `DEMO_VIEWER_*`); it has no demo customer, so shoppers register their own accounts.
+
+Local demo accounts must set a new password at first sign-in. Every local seed reset restores the passwords above. Checkout uses the API mock payment provider (no Stripe / card details).
 
 ## Everyday commands
 
@@ -131,9 +127,9 @@ Pins live in [`versions.json`](versions.json) and are mirrored into `.env.exampl
 
 | Component | Variable | Pinned | Image | Release |
 | :-------- | :------- | :----- | :---- | :------ |
-| API | `ECOM_API_VERSION` | 0.12.0 | [ecommerce-store-api](https://github.com/raouf-b-dev/ecommerce-store-api/pkgs/container/ecommerce-store-api) | [v0.12.0](https://github.com/raouf-b-dev/ecommerce-store-api/releases/tag/v0.12.0) |
-| Admin dashboard | `ECOM_ADMIN_VERSION` | 0.7.0 | [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/pkgs/container/ecommerce-admin-dashboard) | [v0.7.0](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/releases/tag/v0.7.0) |
-| Storefront | `ECOM_WEB_VERSION` | 0.6.0 | [ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web/pkgs/container/ecommerce-store-web) | [v0.6.0](https://github.com/raouf-b-dev/ecommerce-store-web/releases/tag/v0.6.0) |
+| API | `ECOM_API_VERSION` | 0.13.0 | [ecommerce-store-api](https://github.com/raouf-b-dev/ecommerce-store-api/pkgs/container/ecommerce-store-api) | [v0.13.0](https://github.com/raouf-b-dev/ecommerce-store-api/releases/tag/v0.13.0) |
+| Admin dashboard | `ECOM_ADMIN_VERSION` | 0.8.0 | [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/pkgs/container/ecommerce-admin-dashboard) | [v0.8.0](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/releases/tag/v0.8.0) |
+| Storefront | `ECOM_WEB_VERSION` | 0.7.0 | [ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web/pkgs/container/ecommerce-store-web) | [v0.7.0](https://github.com/raouf-b-dev/ecommerce-store-web/releases/tag/v0.7.0) |
 
 To upgrade: bump the pin, then `npm run d:update`. Downgrade needs a data reset (`npm run d:reset`) because migrations are not rolled back.
 
@@ -167,8 +163,7 @@ Details: [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
 
 ## Known limitations
 
-- Seed image may still build once per machine until `ecommerce-store-api-seed` is published for the pinned tag.
-- Live demo URLs in the README stay placeholders until an operator deploys and fills them in.
+- No hosted demo yet (coming soon); run the stack locally.
 - No checkout GIF yet.
 - This repo does not host application source or OpenAPI.
 

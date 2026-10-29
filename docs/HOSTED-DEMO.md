@@ -2,7 +2,7 @@
 
 Operator guide for a free-tier hybrid demo: the API tier runs on a small VM behind Cloudflare Tunnel; the admin dashboard and storefront are separate static/SSR hosts. Local full Compose (`docker compose up`) stays the contributor path and is unchanged.
 
-Placeholder origins in this doc are examples only. Replace them with your real hosts after the first deploy. Never commit real tokens or passwords.
+No public hosted demo is deployed yet; this guide is for when one is. Placeholder origins in this doc are examples only. Replace them with your real hosts after the first deploy. Never commit real tokens or passwords.
 
 ## Architecture
 
@@ -41,7 +41,7 @@ cp .env.example .env
 On a public host, replace the laptop demo defaults before `up`:
 
 - Strong unique `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, and `METRICS_API_KEY` (do not reuse `.env.example` demo strings).
-- Hosted keys (see [.env.example](../.env.example)): `PUBLIC_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `AUTH_COOKIE_SAMESITE`, `DEMO_RESET_ENABLED`, `DEMO_RESET_TOKEN`.
+- Hosted keys (see [.env.example](../.env.example)): `PUBLIC_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `AUTH_COOKIE_SAMESITE`, `DEMO_RESET_ENABLED`, `DEMO_RESET_TOKEN`, `DEMO_READ_ONLY`, and `DEMO_VIEWER_*` (the only public hosted-demo login; defaults are fine for a public labeled demo). `DEMO_SUPERADMIN_*`, `DEMO_ADMIN_*` and `DEMO_CUSTOMER_*` are for local seeding only; the overlay does not pass them.
 - Suggested hosted values (placeholders):
 
 ```env
@@ -50,6 +50,7 @@ CORS_ALLOWED_ORIGINS=https://admin.example.com,https://shop.example.com
 AUTH_COOKIE_SAMESITE=none
 DEMO_RESET_ENABLED=true
 DEMO_RESET_TOKEN=          # generate >= 32 chars on the host; never commit
+DEMO_READ_ONLY=true        # seeds the read-only viewer only; mutations stay RBAC
 API_NODE_ENV=staging
 PAYMENT_MOCK_AUTO_COMPLETE=true
 ```
@@ -88,6 +89,8 @@ Browsers reach only the API (and intentional Swagger at `/api/docs` when enabled
 | `AUTH_COOKIE_SAMESITE` | `none` so Pages/Vercel can send the refresh cookie |
 | `DEMO_RESET_ENABLED` | `true` on the VM when you want scheduled reset |
 | `DEMO_RESET_TOKEN` | High-entropy secret, at least 32 characters |
+| `DEMO_READ_ONLY` | `true` on the public shared demo: the read-only viewer is the only seeded account (no writable operators, no demo customer or orders) |
+| `DEMO_VIEWER_*` | Public viewer login, passed through to the API seed (defaults match API `.env.example`) |
 | `SWAGGER_ENABLED` | Still `true` in this Compose stack for the public demo docs |
 
 Match names exactly with the API image (see the API repo `.env.example` and `docs/infrastructure/HOSTED-DEMO.md`).
@@ -96,7 +99,7 @@ Match names exactly with the API image (see the API repo `.env.example` and `doc
 
 Until each app README has a dedicated hosted section, use this shape:
 
-**Admin (Cloudflare Pages)** - build the [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard) production bundle with the public API origin, for example `VITE_API_BASE_URL=https://api.example.com`. Deploy the static output to Pages on `https://admin.example.com`. That origin must appear in `CORS_ALLOWED_ORIGINS`.
+**Admin (Cloudflare Pages)** - build the [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard) production bundle with the public API origin, for example `VITE_API_BASE_URL=https://api.example.com` and `VITE_DEMO_MODE=true` (read-only banner). Deploy the static output to Pages on `https://admin.example.com`. That origin must appear in `CORS_ALLOWED_ORIGINS`.
 
 **Storefront (Vercel)** - build [ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web) with `NEXT_PUBLIC_API_BASE_URL=https://api.example.com` and `NEXT_PUBLIC_STOREFRONT_ORIGIN=https://shop.example.com` (plus any image-host allowlist the web README documents). Deploy to Vercel on `https://shop.example.com`. That origin must appear in `CORS_ALLOWED_ORIGINS`.
 
@@ -133,7 +136,7 @@ GitHub Settings -> Secrets and variables -> Actions:
 
 Do not put the token in workflow YAML or logs. GitHub masks secret values in logs; the workflow still avoids echoing them. The shared script also refuses the `https://api.example.com` placeholder so a mistyped upload cannot hammer the example host.
 
-Reset restores labeled demo UI accounts and catalog baselines; it does not delete arbitrary shopper accounts or orders. See the API hosted-demo doc for behavior and limits.
+Reset restores the viewer account and catalog baselines; it does not delete arbitrary shopper accounts or orders. See the API hosted-demo doc for behavior and limits.
 
 ## Smoke after deploy
 
@@ -142,7 +145,14 @@ curl -fsS https://api.example.com/health/readiness
 # Open https://api.example.com/api/docs in a browser
 ```
 
-Then open `https://shop.example.com` and `https://admin.example.com`, sign in with the public demo accounts from the README, and run a mock checkout.
+Then open `https://admin.example.com` and sign in as the read-only viewer (`DEMO_VIEWER_EMAIL` / `DEMO_VIEWER_PASSWORD` from the API env). On `https://shop.example.com`, **register** with your own email and run a mock checkout. Do not use local writable operators (`superadmin@` / `admin@`).
+
+## What the viewer can and cannot do (API 0.13+)
+
+- The viewer (`ADMIN_READONLY`) browses products, orders, and inventory in the admin. It cannot mutate data, change its password, or log out every session (`change-password` and `logout-all` return 403), so the published login keeps working for every visitor.
+- It sees no customer personal data: order and payment responses mask names and emails (`Customer #<id>`, `j***@***.com`) and hide shipping addresses; filtering by customer contact data returns 403.
+- Shoppers register on the storefront; there is no seeded customer login.
+- The API does not log customer personal data, credentials, or tokens. Keep it that way on the VM: do not add request-body logging or log shippers that capture full HTTP payloads.
 
 ## Cost expectations
 
@@ -159,5 +169,6 @@ Free tiers can change; watch egress, build minutes, and Oracle reclaim policies.
 ## Upgrade path
 
 - Bump pins in this repo (`versions.json` / `npm run bump`) and `docker compose ... pull` on the VM.
+- API 0.12.x -> 0.13.0: the `migrate` service applies the new migrations on `up`. The API moved to bullmq 6; an existing VM whose Redis volume still holds bullmq 5 repeatable jobs must run the legacy-repeatables cleanup from the API bullmq 5 release before starting 0.13.0 (see the API 0.13.0 CHANGELOG and `docs/infrastructure/REDIS.md`). A fresh install can skip this.
 - Redeploy admin/web when their pins or env change.
 - Local contributors keep using full Compose without the hosted overlay.

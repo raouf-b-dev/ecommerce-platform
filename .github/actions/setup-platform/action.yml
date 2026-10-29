@@ -1,14 +1,23 @@
 name: Setup platform
-description: Node 24, npm ci, and .env from .env.example (checkout must already exist)
+description: Node from .nvmrc, npm from devEngines, npm ci, and .env from .env.example (checkout must already exist)
 
 runs:
   using: composite
   steps:
-    - name: Setup Node.js 24
+    - name: Setup Node.js
       uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
-        node-version: 24
-        cache: npm
+        node-version-file: .nvmrc
+        # No npm cache: setup-node would run `npm config get cache` with the
+        # bundled npm, which devEngines rejects until the pinned npm is installed.
+        package-manager-cache: false
+
+    - name: Install pinned npm (package.json devEngines.packageManager)
+      shell: bash
+      run: |
+        version="$(node --print "require('./package.json').devEngines.packageManager.version")"
+        npm install --global "npm@${version}"
+        npm --version
 
     - name: Install npm dependencies
       shell: bash

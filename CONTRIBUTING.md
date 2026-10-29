@@ -41,6 +41,8 @@ CI on every PR runs parallel jobs under one required check (`CI Status Check`):
 - **Compose Checks** - compose guardrails and `docker compose config`
 - **Script Tests** - `test:scripts`
 - **Smoke Test** - `docker compose up -d --wait`, HTTP probes, one-shot exit codes
+- **Detect Changes** - PR only; decides whether Observability Smoke runs (a `git diff` error fails it)
+- **Observability Smoke** - `--profile observability` stack with Grafana and Prometheus probes; on PRs that change `compose.yaml`, `config/observability/`, `.github/workflows/ci.yml` or `.github/actions/setup-platform/`, and on `workflow_dispatch`
 - **CI Status Check** - aggregator (the only ruleset-required context)
 
 ### Version bumps
