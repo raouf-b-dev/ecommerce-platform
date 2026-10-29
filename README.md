@@ -54,6 +54,8 @@ Or: `npm run d:urls` / `npm run d:open` (ports come from `.env`).
 | Admin | `admin@store.local` | `Admin123!` | Admin |
 | Customer | `customer@store.local` | `Customer123!` | Storefront |
 
+These accounts are for local Compose only. The hosted demo (coming soon) seeds just a read-only admin viewer (`DEMO_READ_ONLY=true`, `DEMO_VIEWER_*`); it has no demo customer, so shoppers register their own accounts.
+
 Local demo accounts must set a new password at first sign-in. Every local seed reset restores the passwords above. Checkout uses the API mock payment provider (no Stripe / card details).
 
 ## Everyday commands
@@ -125,9 +127,9 @@ Pins live in [`versions.json`](versions.json) and are mirrored into `.env.exampl
 
 | Component | Variable | Pinned | Image | Release |
 | :-------- | :------- | :----- | :---- | :------ |
-| API | `ECOM_API_VERSION` | 0.12.0 | [ecommerce-store-api](https://github.com/raouf-b-dev/ecommerce-store-api/pkgs/container/ecommerce-store-api) | [v0.12.0](https://github.com/raouf-b-dev/ecommerce-store-api/releases/tag/v0.12.0) |
-| Admin dashboard | `ECOM_ADMIN_VERSION` | 0.7.0 | [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/pkgs/container/ecommerce-admin-dashboard) | [v0.7.0](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/releases/tag/v0.7.0) |
-| Storefront | `ECOM_WEB_VERSION` | 0.6.0 | [ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web/pkgs/container/ecommerce-store-web) | [v0.6.0](https://github.com/raouf-b-dev/ecommerce-store-web/releases/tag/v0.6.0) |
+| API | `ECOM_API_VERSION` | 0.13.0 | [ecommerce-store-api](https://github.com/raouf-b-dev/ecommerce-store-api/pkgs/container/ecommerce-store-api) | [v0.13.0](https://github.com/raouf-b-dev/ecommerce-store-api/releases/tag/v0.13.0) |
+| Admin dashboard | `ECOM_ADMIN_VERSION` | 0.8.0 | [ecommerce-admin-dashboard](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/pkgs/container/ecommerce-admin-dashboard) | [v0.8.0](https://github.com/raouf-b-dev/ecommerce-admin-dashboard/releases/tag/v0.8.0) |
+| Storefront | `ECOM_WEB_VERSION` | 0.7.0 | [ecommerce-store-web](https://github.com/raouf-b-dev/ecommerce-store-web/pkgs/container/ecommerce-store-web) | [v0.7.0](https://github.com/raouf-b-dev/ecommerce-store-web/releases/tag/v0.7.0) |
 
 To upgrade: bump the pin, then `npm run d:update`. Downgrade needs a data reset (`npm run d:reset`) because migrations are not rolled back.
 
@@ -161,7 +163,6 @@ Details: [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
 
 ## Known limitations
 
-- Seed image may still build once per machine until `ecommerce-store-api-seed` is published for the pinned tag.
 - No hosted demo yet (coming soon); run the stack locally.
 - No checkout GIF yet.
 - This repo does not host application source or OpenAPI.
