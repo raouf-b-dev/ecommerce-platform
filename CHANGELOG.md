@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-03
+
+App pin refresh and observability image updates. Pins ecommerce-store-api 0.14.0, ecommerce-admin-dashboard 0.9.0 and ecommerce-store-web 0.8.0.
+
+### Changed
+
+- Pin ecommerce-store-api 0.14.0 (API and `ecommerce-store-api-seed` images), ecommerce-admin-dashboard 0.9.0 and ecommerce-store-web 0.8.0 (`versions.json`, `.env.example`, README version matrix).
+- Platform version `0.4.0`.
+- Bump Prometheus to v3.15.1 and Grafana to 13.3.0 in `compose.yaml` ([#20](https://github.com/raouf-b-dev/ecommerce-platform/pull/20), [#22](https://github.com/raouf-b-dev/ecommerce-platform/pull/22)).
+- Bump `docker/login-action` to 4.7.0 in CI workflows ([#21](https://github.com/raouf-b-dev/ecommerce-platform/pull/21)).
+
+### Upgrade notes
+
+- Operators pulling the new API image must follow the ecommerce-store-api [0.14.0 upgrade notes](https://github.com/raouf-b-dev/ecommerce-store-api/releases/tag/v0.14.0) (canonical `totalAmount` field, refund-payment queue drain before deploy, refund and not-found error codes, and granting `cancel_own_orders` to custom roles).
+- Pull new images and apply database migrations: run `npm run d:update` (or `docker compose pull` and `docker compose up -d --wait`). The `migrate` service applies API migrations automatically.
+
+[Compare v0.3.0...v0.4.0](https://github.com/raouf-b-dev/ecommerce-platform/compare/v0.3.0...v0.4.0)
+
 ## [0.3.0] - 2026-10-29
 
 Node 26 / npm 12 toolchain, the API read-only hosted-demo model, and pin refresh. Pins ecommerce-store-api 0.13.0, ecommerce-admin-dashboard 0.8.0 and ecommerce-store-web 0.7.0.
