@@ -7,9 +7,9 @@ One Compose file. Three published apps. A working ecommerce demo on your laptop.
 
 This repo is **configuration only** (a compose platform). The API, admin dashboard, and storefront ship as versioned GHCR images. Design notes: [docs/DESIGN.md](docs/DESIGN.md). Hosted demo operator guide (not deployed yet): [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
 
-## Hosted demo
+## Demo
 
-Hosted demo: coming soon. Until then, run everything locally with `docker compose up` (see [Run the demo](#run-the-demo)); local sign-in accounts are under [Local demo sign-in](#local-demo-sign-in-demo_read_onlyfalse).
+Run everything locally with `docker compose up` (see [Run the demo](#run-the-demo)); local sign-in accounts are under [Local demo sign-in](#local-demo-sign-in-demo_read_onlyfalse). A hosted public demo is in progress (operator guide: [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md)).
 
 ## Run the demo
 
@@ -54,7 +54,7 @@ Or: `npm run d:urls` / `npm run d:open` (ports come from `.env`).
 | Admin | `admin@store.local` | `Admin123!` | Admin |
 | Customer | `customer@store.local` | `Customer123!` | Storefront |
 
-These accounts are for local Compose only. The hosted demo (coming soon) seeds just a read-only admin viewer (`DEMO_READ_ONLY=true`, `DEMO_VIEWER_*`); it has no demo customer, so shoppers register their own accounts.
+These accounts are for local Compose only. The hosted public demo (in progress) seeds just a read-only admin viewer (`DEMO_READ_ONLY=true`, `DEMO_VIEWER_*`); it has no demo customer, so shoppers register their own accounts.
 
 Local demo accounts must set a new password at first sign-in. Every local seed reset restores the passwords above. Checkout uses the API mock payment provider (no Stripe / card details).
 
@@ -163,7 +163,7 @@ Details: [docs/HOSTED-DEMO.md](docs/HOSTED-DEMO.md).
 
 ## Known limitations
 
-- No hosted demo yet (coming soon); run the stack locally.
+- Hosted public demo is in progress; until then run the stack locally.
 - No checkout GIF yet.
 - This repo does not host application source or OpenAPI.
 
